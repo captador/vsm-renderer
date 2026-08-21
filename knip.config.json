@@ -1,0 +1,12 @@
+{
+  "ignore": ["demo/**"],
+  "ignoreDependencies": [
+    "@testing-library/react",
+    "@testing-library/jest-dom",
+    "@types/react",
+    "@types/react-dom",
+    "react",
+    "react-dom",
+    "vite-plugin-dts"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "name": "@captador/vsm-render",
+  "version": "0.1.0",
+  "description": "Viable System Model rendering library - Konva-based visualization for VSM diagrams",
+  "author": "Arseny Krasikov",
+  "license": "EUPL-1.2",
+  "homepage": "https://github.com/arsenykrasikov/vsm-render#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arsenykrasikov/vsm-render.git"
+  },
+  "bugs": {
+    "url": "https://github.com/arsenykrasikov/vsm-render/issues"
+  },
+  "keywords": [
+    "vsm",
+    "viable-system-model",
+    "viable systems model",
+    "diagram",
+    "visualization",
+    "konva",
+    "typescript",
+    "canvas",
+    "systems-thinking",
+    "management",
+    "cybernetics"
+  ],
+  "type": "module",
+  "main": "dist/vsm-render.cjs",
+  "module": "dist/vsm-render.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/vsm-render.js",
+      "require": "./dist/vsm-render.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "dev": "vite demo",
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "pack:local": "pnpm run build && pnpm pack",
+    "build:demo": "vite build --mode demo",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write ."
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "sideEffects": false,
+  "peerDependencies": {
+    "konva": "^9.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.49.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.67.0",
+    "@typescript-eslint/parser": "^8.67.0",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "jsdom": "^30.0.1",
+    "konva": "^9.0.0",
+    "prettier": "^3.9.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1",
+    "vite-plugin-dts": "^5.0.3",
+    "vitest": "^4.1.10"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.22.0",
+      "onFail": "download"
+    }
+  }
+}

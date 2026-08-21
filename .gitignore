@@ -1,0 +1,28 @@
+### IDE
+.idea/
+
+### Agents
+.claude/
+.vibe/
+.pi/
+.pi-lens/
+
+### Build
+dist-demo/
+dist/
+node_modules/
+coverage/
+tests/snapshots/
+
+### macOS template
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+dist-demo/

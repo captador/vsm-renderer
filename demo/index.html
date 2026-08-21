@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VSM Renderer Demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        background: #f0f2f5;
+      }
+
+      .header {
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .header h1 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .main {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .canvas-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #fff;
+        overflow: auto;
+        padding: 20px;
+      }
+
+      .sidebar {
+        width: 280px;
+        background: #fff;
+        border-left: 1px solid #ddd;
+        overflow-y: auto;
+        padding: 16px;
+      }
+
+      .section {
+        margin-bottom: 24px;
+      }
+
+      .section h3 {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #666;
+        margin-bottom: 12px;
+      }
+
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+
+      .breadcrumb-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #ddd;
+        background: #f9f9f9;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .breadcrumb-chip:hover {
+        background: #e8f4f8;
+        border-color: #b8daff;
+      }
+
+      .breadcrumb-chip.current {
+        background: #1b2330;
+        color: #fff;
+        border-color: #1b2330;
+      }
+
+      .breadcrumb-sep {
+        color: #999;
+        font-size: 13px;
+      }
+
+      .channel-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .channel-btn {
+        border: 1px solid #ddd;
+        background: #f9f9f9;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #555;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .channel-btn:hover {
+        background: #e8f4f8;
+        border-color: #b8daff;
+      }
+
+      .channel-btn.on {
+        background: #1d3880;
+        color: #fff;
+        border-color: #1d3880;
+      }
+
+      .info-panel {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        background: #f9f9f9;
+      }
+
+      .info-panel h4 {
+        font-size: 13px;
+        margin-bottom: 6px;
+        color: #333;
+      }
+
+      .info-panel p {
+        font-size: 12px;
+        color: #666;
+        line-height: 1.5;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        border: 1px solid #ddd;
+        background: #fff;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .btn:hover {
+        background: #f0f0f0;
+      }
+
+      .btn.primary {
+        background: #1d3880;
+        color: #fff;
+        border-color: #1d3880;
+      }
+
+      .btn.primary:hover {
+        background: #192d68;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>
