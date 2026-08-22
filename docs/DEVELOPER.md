@@ -39,14 +39,14 @@ const renderer = new VsmRenderer({
 
 All options are passed as a single object to `new VsmRenderer(options)`.
 
-| Option      | Type                                   | Required | Default         | Description                                                         |
-| ----------- | -------------------------------------- | -------- | --------------- | ------------------------------------------------------------------- |
-| `container` | `HTMLElement \| string`                | yes      | —               | DOM element or CSS selector (`'#my-div'`) that receives the canvas  |
-| `system`    | `VsmSystem`                            | yes      | —               | Initial VSM data tree to render                                     |
-| `onEvent`   | `(event: VsmEvent) => void`            | yes      | —               | Callback fired for every user interaction and lifecycle event       |
-| `channels`  | `Partial<ChannelVisibility>`           | no       | all on except g | Initial channel visibility; omitted channels keep their defaults    |
-| `width`     | `number`                               | no       | `900`           | Canvas width in pixels                                              |
-| `height`    | `number`                               | no       | `1100`          | Canvas height in pixels                                             |
+| Option      | Type                         | Required | Default         | Description                                                        |
+| ----------- | ---------------------------- | -------- | --------------- | ------------------------------------------------------------------ |
+| `container` | `HTMLElement \| string`      | yes      | —               | DOM element or CSS selector (`'#my-div'`) that receives the canvas |
+| `system`    | `VsmSystem`                  | yes      | —               | Initial VSM data tree to render                                    |
+| `onEvent`   | `(event: VsmEvent) => void`  | yes      | —               | Callback fired for every user interaction and lifecycle event      |
+| `channels`  | `Partial<ChannelVisibility>` | no       | all on except g | Initial channel visibility; omitted channels keep their defaults   |
+| `width`     | `number`                     | no       | `900`           | Canvas width in pixels                                             |
+| `height`    | `number`                     | no       | `1100`          | Canvas height in pixels                                            |
 
 The container element will have `position: relative` set on it and will receive two injected children: the Konva `div.konvajs-content` wrapper and the controls overlay `div`.
 
@@ -60,7 +60,7 @@ Replace the rendered VSM with a new system and re-draw all layers. Use this when
 
 ```typescript
 renderer.setSystem(unit.children!); // drill into sub-VSM
-renderer.setSystem(parentSystem);   // drill back up
+renderer.setSystem(parentSystem); // drill back up
 ```
 
 The selection highlight is cleared automatically on each `setSystem` call.
@@ -70,7 +70,7 @@ The selection highlight is cleared automatically on each `setSystem` call.
 Toggle channel visibility without a full re-render. Only the changed channels are updated.
 
 ```typescript
-renderer.setChannels({ g: true });          // show algedonic bypass
+renderer.setChannels({ g: true }); // show algedonic bypass
 renderer.setChannels({ b: false, c: false }); // hide audit + deps
 ```
 
@@ -111,23 +111,23 @@ All events are delivered via the `onEvent` callback. The `VsmEvent` union type i
 
 ### Interaction events
 
-| `event.type`      | Extra fields                        | Fired when                                    |
-| ----------------- | ----------------------------------- | --------------------------------------------- |
-| `click:s5`        | —                                   | User clicks the S5 bar                        |
-| `click:s4`        | —                                   | User clicks the S4 bar                        |
-| `click:s3`        | —                                   | User clicks the S3 bar                        |
-| `click:s3star`    | —                                   | User clicks the S3\* triangle                 |
-| `click:s2`        | —                                   | User clicks the S2 triangle                   |
-| `click:s1`        | `index: number`, `unit: S1Unit`     | User clicks an S1 unit (op circle or mgmt box)|
-| `click:env`       | `index: number`, `env: EnvBlob`     | User clicks an S1 sub-environment blob        |
-| `click:futureEnv` | —                                   | User clicks the future-environment blob       |
-| `click:channel`   | `channel: ChannelId`                | Reserved; not currently emitted               |
+| `event.type`      | Extra fields                    | Fired when                                     |
+| ----------------- | ------------------------------- | ---------------------------------------------- |
+| `click:s5`        | —                               | User clicks the S5 bar                         |
+| `click:s4`        | —                               | User clicks the S4 bar                         |
+| `click:s3`        | —                               | User clicks the S3 bar                         |
+| `click:s3star`    | —                               | User clicks the S3\* triangle                  |
+| `click:s2`        | —                               | User clicks the S2 triangle                    |
+| `click:s1`        | `index: number`, `unit: S1Unit` | User clicks an S1 unit (op circle or mgmt box) |
+| `click:env`       | `index: number`, `env: EnvBlob` | User clicks an S1 sub-environment blob         |
+| `click:futureEnv` | —                               | User clicks the future-environment blob        |
+| `click:channel`   | `channel: ChannelId`            | Reserved; not currently emitted                |
 
 ### Lifecycle events
 
-| `event.type` | Fired when                                              |
-| ------------ | ------------------------------------------------------- |
-| `ready`      | Renderer fully initialised after construction           |
+| `event.type` | Fired when                                    |
+| ------------ | --------------------------------------------- |
+| `ready`      | Renderer fully initialised after construction |
 
 ### Navigation pattern
 
@@ -158,8 +158,8 @@ useEffect(() => {
 interface VsmSystem {
   id: string;
   name: string;
-  s1: S1Unit[];            // ≥ 1 operational units
-  metasystem: Metasystem;  // exactly one S2, S3, S3*, S4, S5
+  s1: S1Unit[]; // ≥ 1 operational units
+  metasystem: Metasystem; // exactly one S2, S3, S3*, S4, S5
   environments: EnvBlob[]; // parallel to s1[], one per unit
   futureEnvironment: FutureEnvironment;
 }
@@ -194,14 +194,14 @@ Default: `{ a: true, b: true, c: true, d: true, e: true, f: true, g: false }`.
 
 The renderer uses **six Konva layers** stacked bottom-to-top:
 
-| Layer         | Renderer module       | Contents                                                        |
-| ------------- | --------------------- | --------------------------------------------------------------- |
-| `env`         | EnvironmentRenderer   | Outer silhouette, future-env blob, sub-env blobs, eye-loops     |
-| `channels`    | ChannelRenderer       | Seven channel groups (a–g), each a `Konva.Group`                |
-| `meta`        | MetasystemRenderer    | S5/S4/S3 bars, S3\*/S2 triangles, spine connectors, elbow feeds |
-| `units`       | UnitsRenderer         | S1 op circles, mgmt rects, diagonal connectors, label tooltip   |
-| `top`         | TopLayerRenderer      | S5 dampening arms, S3↔S4 homeostat arrows                       |
-| `selection`   | VsmRenderer (inline)  | Dashed-border highlight shapes for the selected element         |
+| Layer       | Renderer module      | Contents                                                        |
+| ----------- | -------------------- | --------------------------------------------------------------- |
+| `env`       | EnvironmentRenderer  | Outer silhouette, future-env blob, sub-env blobs, eye-loops     |
+| `channels`  | ChannelRenderer      | Seven channel groups (a–g), each a `Konva.Group`                |
+| `meta`      | MetasystemRenderer   | S5/S4/S3 bars, S3\*/S2 triangles, spine connectors, elbow feeds |
+| `units`     | UnitsRenderer        | S1 op circles, mgmt rects, diagonal connectors, label tooltip   |
+| `top`       | TopLayerRenderer     | S5 dampening arms, S3↔S4 homeostat arrows                       |
+| `selection` | VsmRenderer (inline) | Dashed-border highlight shapes for the selected element         |
 
 All six layers are added to a single `Konva.Stage`. The selection layer is the topmost so highlights are never obscured.
 
@@ -227,23 +227,23 @@ All six layers are added to a single `Konva.Stage`. The selection layer is the t
 
 Key values driving the coordinate system:
 
-| Constant      | Value | Description                                        |
-| ------------- | ----- | -------------------------------------------------- |
-| `CANVAS_WIDTH`  | 900  | Default stage width                                |
-| `CANVAS_HEIGHT` | 1100 | Default stage height                               |
-| `CIRCLE_X`    | 490   | X centre of S1 operation circles                  |
-| `CIRCLE_R`    | 25    | Radius of S1 operation circles                     |
-| `SQ_CX`       | 568   | X centre of S1 management squares                 |
-| `SQ_W`        | 102   | Width of S1 management squares                     |
-| `SQ_H`        | 48    | Height of S1 management squares                    |
-| `S1_MGMT_DY`  | 48    | Vertical offset: mgmt square above op circle       |
-| `ROW_0`       | 380   | Y of the first S1 row (index 0)                    |
-| `ROW_H`       | 112   | Vertical step between consecutive S1 rows          |
-| `ENV_X`       | 200   | X centre of the environment column                 |
-| `CMD_L`       | 561   | Left command line X (channel e spine)              |
-| `CMD_R`       | 575   | Right resource line X (channel d spine)            |
-| `MAX_ZOOM`    | 6     | Maximum zoom factor                                |
-| `MIN_ZOOM`    | 0.1   | Minimum zoom factor                                |
+| Constant        | Value | Description                                  |
+| --------------- | ----- | -------------------------------------------- |
+| `CANVAS_WIDTH`  | 900   | Default stage width                          |
+| `CANVAS_HEIGHT` | 1100  | Default stage height                         |
+| `CIRCLE_X`      | 490   | X centre of S1 operation circles             |
+| `CIRCLE_R`      | 25    | Radius of S1 operation circles               |
+| `SQ_CX`         | 568   | X centre of S1 management squares            |
+| `SQ_W`          | 102   | Width of S1 management squares               |
+| `SQ_H`          | 48    | Height of S1 management squares              |
+| `S1_MGMT_DY`    | 48    | Vertical offset: mgmt square above op circle |
+| `ROW_0`         | 380   | Y of the first S1 row (index 0)              |
+| `ROW_H`         | 112   | Vertical step between consecutive S1 rows    |
+| `ENV_X`         | 200   | X centre of the environment column           |
+| `CMD_L`         | 561   | Left command line X (channel e spine)        |
+| `CMD_R`         | 575   | Right resource line X (channel d spine)      |
+| `MAX_ZOOM`      | 6     | Maximum zoom factor                          |
+| `MIN_ZOOM`      | 0.1   | Minimum zoom factor                          |
 
 Row Y coordinates are computed by `rowY(i) = ROW_0 + i * ROW_H`. Management square Y centre is `rowY(i) - S1_MGMT_DY`.
 

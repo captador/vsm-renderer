@@ -110,8 +110,14 @@ export function renderUnitsLayer(
       })
     );
 
-
     unitGroup.on('click', createUnitClickHandler(emit, i, unit));
+
+    if (unit.children) {
+      unitGroup.on('dblclick', (e) => {
+        e.cancelBubble = true;
+        emit({ type: 'drillDown', index: i, unit, path: [] });
+      });
+    }
 
     unitGroup.on('mouseenter', () => {
       opCircle.fill(COLORS.hover);
