@@ -1,0 +1,120 @@
+name: CI / Release
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Unit tests — runs on every PR and every push to main.
+  # Skipped on the version-bump commit that publish.yml pushes after a release,
+  # to avoid redundant runs in the auto-release loop.
+  # ─────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Unit Tests
+    if: "!startsWith(github.event.head_commit.message, 'chore: release v')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Get pnpm store path
+        id: pnpm-cache
+        run: echo "dir=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.dir }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm exec prettier --check .
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Auto Release — runs only on pushes to main once tests pass.
+  # Determines the next semantic version from conventional commit messages,
+  # then creates a GitHub Release. The existing publish.yml picks up the release
+  # event and publishes the npm package to GitHub Packages.
+  #
+  # Version bump rules (conventional commits):
+  #   BREAKING CHANGE or type!:  →  major
+  #   feat:                      →  minor
+  #   fix: / chore: / docs: / …  →  patch
+  # ─────────────────────────────────────────────────────────────────────────────
+  release:
+    name: Auto Release
+    needs: test
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      !startsWith(github.event.head_commit.message, 'chore: release v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine next version
+        id: version
+        run: |
+          # Current version from package.json
+          CURRENT=$(node -p "require('./package.json').version")
+
+          # Commits since the last tag (or all commits if no tags yet)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -n "$LAST_TAG" ]; then
+            COMMITS=$(git log "$LAST_TAG..HEAD" --pretty=format:"%s%n%b")
+          else
+            COMMITS=$(git log --pretty=format:"%s%n%b")
+          fi
+
+          # Determine bump type
+          BUMP="patch"
+          if echo "$COMMITS" | grep -qE '(^|\n)BREAKING CHANGE:' || \
+             echo "$COMMITS" | grep -qiE '^[a-z]+(\(.+\))?!:'; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -qE '^feat(\(.+\))?:'; then
+            BUMP="minor"
+          fi
+
+          # Increment the appropriate component
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          case "$BUMP" in
+            major) NEW="$((MAJOR + 1)).0.0" ;;
+            minor) NEW="$MAJOR.$((MINOR + 1)).0" ;;
+            patch) NEW="$MAJOR.$MINOR.$((PATCH + 1))" ;;
+          esac
+
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+          echo "new=$NEW"         >> $GITHUB_OUTPUT
+          echo "bump=$BUMP"       >> $GITHUB_OUTPUT
+          echo "tag=v$NEW"        >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --generate-notes \
+            --latest

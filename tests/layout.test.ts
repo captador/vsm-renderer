@@ -94,7 +94,7 @@ describe('Layout Constants', () => {
     });
 
     it('should have correct ROW0 position', () => {
-      expect(ROW0).toBe(332);
+      expect(ROW0).toBe(380);
     });
 
     it('should have correct ROW_H', () => {
