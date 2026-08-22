@@ -11,10 +11,23 @@ import Konva from 'konva';
 import { VsmSystem, VsmEvent, ChannelId, ChannelVisibility, VsmRendererOptions } from './types';
 import { COLORS } from './utils/palette';
 import {
-  CANVAS_WIDTH, CANVAS_HEIGHT, MAX_ZOOM, MIN_ZOOM,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+  MAX_ZOOM,
+  MIN_ZOOM,
   rowY,
-  S5, S4, S3, S3STAR, S2,
-  CIRCLE_X, CIRCLE_R, SQ_CX, SQ_W, SQ_H, S1_MGMT_DY, ENV_X,
+  S5,
+  S4,
+  S3,
+  S3STAR,
+  S2,
+  CIRCLE_X,
+  CIRCLE_R,
+  SQ_CX,
+  SQ_W,
+  SQ_H,
+  S1_MGMT_DY,
+  ENV_X,
 } from './layout';
 import { renderEnvironmentLayer } from './renderers/EnvironmentRenderer';
 import { renderChannelLayer } from './renderers/ChannelRenderer';
@@ -72,6 +85,9 @@ export class VsmRenderer {
   private system!: VsmSystem;
   private channels!: ChannelVisibility;
   private onEvent?: (event: VsmEvent) => void;
+
+  // Drill-down breadcrumb stack (ancestor systems, outermost first)
+  private _path: VsmSystem[] = [];
 
   // Selection
   private selectionLayer!: Konva.Layer;
@@ -211,6 +227,22 @@ export class VsmRenderer {
   setSystem(system: VsmSystem): void {
     this.system = system;
     this.render();
+  }
+
+  /**
+   * Navigate up one level in the drill-down stack.
+   *
+   * Pops the most recent ancestor and re-renders it, then emits
+   * `{ type: 'drillUp', path }` with the remaining stack.
+   * Does nothing if already at the root level.
+   */
+  drillUp(): void {
+    if (this._path.length === 0) return;
+    const parent = this._path.pop()!;
+    this.setSystem(parent);
+    if (this.onEvent) {
+      this.onEvent({ type: 'drillUp', path: [...this._path] });
+    }
   }
 
   /**
@@ -402,6 +434,13 @@ export class VsmRenderer {
    * Emit an event to the host, updating the selection highlight first.
    */
   private emitEvent(event: VsmEvent): void {
+    if (event.type === 'drillDown') {
+      this._path.push(this.system);
+      const enriched: VsmEvent = { ...event, path: [...this._path] };
+      this.setSystem(event.unit.children!);
+      if (this.onEvent) this.onEvent(enriched);
+      return;
+    }
     this.updateSelection(event);
     if (this.onEvent) {
       this.onEvent(event);
@@ -433,21 +472,36 @@ export class VsmRenderer {
 
     const selRect = (x: number, y: number, w: number, h: number, cr = 7) =>
       new Konva.Rect({
-        x: x - P, y: y - P, width: w + P * 2, height: h + P * 2,
-        cornerRadius: cr + P, stroke: STROKE, strokeWidth: SW,
-        dash: DASH, listening: false,
+        x: x - P,
+        y: y - P,
+        width: w + P * 2,
+        height: h + P * 2,
+        cornerRadius: cr + P,
+        stroke: STROKE,
+        strokeWidth: SW,
+        dash: DASH,
+        listening: false,
       });
 
     const selCircle = (x: number, y: number, r: number) =>
       new Konva.Circle({
-        x, y, radius: r + P,
-        stroke: STROKE, strokeWidth: SW, dash: DASH, listening: false,
+        x,
+        y,
+        radius: r + P,
+        stroke: STROKE,
+        strokeWidth: SW,
+        dash: DASH,
+        listening: false,
       });
 
     const selPoly = (points: number[]) =>
       new Konva.Line({
-        points, closed: true,
-        stroke: STROKE, strokeWidth: SW, dash: DASH, listening: false,
+        points,
+        closed: true,
+        stroke: STROKE,
+        strokeWidth: SW,
+        dash: DASH,
+        listening: false,
       });
 
     switch (event.type) {
@@ -462,13 +516,18 @@ export class VsmRenderer {
         break;
       case 'click:s3star':
         this.applySelection([
-          selPoly([S3STAR.cx - 30, S3STAR.topY, S3STAR.cx + 30, S3STAR.topY, S3STAR.cx, S3STAR.botY]),
+          selPoly([
+            S3STAR.cx - 30,
+            S3STAR.topY,
+            S3STAR.cx + 30,
+            S3STAR.topY,
+            S3STAR.cx,
+            S3STAR.botY,
+          ]),
         ]);
         break;
       case 'click:s2':
-        this.applySelection([
-          selPoly([S2.cx - 30, S2.botY, S2.cx + 30, S2.botY, S2.cx, S2.topY]),
-        ]);
+        this.applySelection([selPoly([S2.cx - 30, S2.botY, S2.cx + 30, S2.botY, S2.cx, S2.topY])]);
         break;
       case 'click:s1': {
         const y = rowY(event.index);
@@ -483,8 +542,14 @@ export class VsmRenderer {
         const y = rowY(event.index);
         this.applySelection([
           new Konva.Ellipse({
-            x: ENV_X, y, radiusX: 43 + P, radiusY: 86 + P,
-            stroke: STROKE, strokeWidth: SW, dash: DASH, listening: false,
+            x: ENV_X,
+            y,
+            radiusX: 43 + P,
+            radiusY: 86 + P,
+            stroke: STROKE,
+            strokeWidth: SW,
+            dash: DASH,
+            listening: false,
           }),
         ]);
         break;
@@ -492,8 +557,14 @@ export class VsmRenderer {
       case 'click:futureEnv':
         this.applySelection([
           new Konva.Ellipse({
-            x: ENV_X, y: 150, radiusX: 46 + P, radiusY: 40 + P,
-            stroke: STROKE, strokeWidth: SW, dash: DASH, listening: false,
+            x: ENV_X,
+            y: 150,
+            radiusX: 46 + P,
+            radiusY: 40 + P,
+            stroke: STROKE,
+            strokeWidth: SW,
+            dash: DASH,
+            listening: false,
           }),
         ]);
         break;
@@ -524,8 +595,7 @@ export class VsmRenderer {
     const el = this.systemLabelEl;
     if (!el) return;
 
-    const lineStyle =
-      'white-space:nowrap;max-width:440px;overflow:hidden;text-overflow:ellipsis;';
+    const lineStyle = 'white-space:nowrap;max-width:440px;overflow:hidden;text-overflow:ellipsis;';
 
     const mkLine = (text: string, size: string, weight: string, color: string): HTMLDivElement => {
       const d = document.createElement('div');
@@ -561,9 +631,16 @@ export class VsmRenderer {
       btn.title = title;
       btn.innerHTML = icon;
       btn.style.cssText = btnBase;
-      btn.addEventListener('mouseenter', () => { btn.style.background = '#f0f4f8'; });
-      btn.addEventListener('mouseleave', () => { btn.style.background = 'white'; });
-      btn.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = '#f0f4f8';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = 'white';
+      });
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onClick();
+      });
       return btn;
     };
 
@@ -642,9 +719,14 @@ export class VsmRenderer {
       stage.container().style.cursor = 'grab';
     });
 
-    // Double-click to reset view
-    stage.on('dblclick', () => {
-      this.fitView();
+    // Double-click on empty canvas: drill up if possible, otherwise reset view
+    stage.on('dblclick', (e) => {
+      if (e.target !== stage) return;
+      if (this._path.length > 0) {
+        this.drillUp();
+      } else {
+        this.fitView();
+      }
     });
   }
 }

@@ -26,7 +26,7 @@ This document is the authoritative, **implementation-independent** specification
 | S3     | Control           | Runs the inside as a whole; allocates resources; optimises the S1 collective.                    |
 | S3\*   | Audit             | Sporadic direct probe into operations that **bypasses** the command line to verify ground truth. |
 | S4     | Intelligence      | Looks outside and ahead; models the future; adapts.                                              |
-| S5     | Policy / Identity | Ethos, identity, final arbiter; balances S3 (now) vs S4 (future).                               |
+| S5     | Policy / Identity | Ethos, identity, final arbiter; balances S3 (now) vs S4 (future).                                |
 
 **Groupings:** S1+S2+S3+S3\* = _operative management_. S3↔S4 = _strategic_. S5 = _normative_.
 
@@ -92,15 +92,15 @@ Algedonic bypass          #C0399F  (magenta)
 
 Channels are the connective tissue of the VSM. Each must be **independently toggleable**.
 
-| ID    | Name                     | Visual                                                                                              | Color     | Connects                                          |
-| ----- | ------------------------ | --------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------- |
-| **a** | Environmental overlaps   | Amber lens shape (filled ellipse)                                                                   | `#FFCC50` | Adjacent S1 sub-environments                      |
-| **b** | System 3\* audit         | Vertical spine from S3\* triangle down + horizontal branch into each S1 **ops circle**             | `#FF5534` | S3\* → each S1 ops circle only                    |
-| **c** | Operational dependencies | Wavy vertical arrows between adjacent S1 ops circles                                                | `#FFCC50` | Adjacent S1 ops circles                           |
-| **d** | Resource bargain         | Vertical line (right side) with horizontal rung at each S1 **mgmt square** row                     | `#FF5534` | S3 ↔ each S1 mgmt square                          |
-| **e** | Command / intervention   | Vertical line (left side) from S3 down to bottom S1 mgmt level                                     | `#FF5534` | S3 → S1 mgmt column                               |
+| ID    | Name                     | Visual                                                                                              | Color     | Connects                                            |
+| ----- | ------------------------ | --------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------- |
+| **a** | Environmental overlaps   | Amber lens shape (filled ellipse)                                                                   | `#FFCC50` | Adjacent S1 sub-environments                        |
+| **b** | System 3\* audit         | Vertical spine from S3\* triangle down + horizontal branch into each S1 **ops circle**              | `#FF5534` | S3\* → each S1 ops circle only                      |
+| **c** | Operational dependencies | Wavy vertical arrows between adjacent S1 ops circles                                                | `#FFCC50` | Adjacent S1 ops circles                             |
+| **d** | Resource bargain         | Vertical line (right side) with horizontal rung at each S1 **mgmt square** row                      | `#FF5534` | S3 ↔ each S1 mgmt square                            |
+| **e** | Command / intervention   | Vertical line (left side) from S3 down to bottom S1 mgmt level                                      | `#FF5534` | S3 → S1 mgmt column                                 |
 | **f** | S2 coordination          | Vertical spine from S2 triangle down + horizontal rungs into each S1 **mgmt square AND ops circle** | `#FFCC50` | S2 → each S1 mgmt square **and** each S1 ops circle |
-| **g** | Algedonic bypass         | Dashed magenta path; default **off**                                                                | `#C0399F` | S1 ops → S5 (unidirectional upward alarm)         |
+| **g** | Algedonic bypass         | Dashed magenta path; default **off**                                                                | `#C0399F` | S1 ops → S5 (unidirectional upward alarm)           |
 
 **Channel g routing:** originates at the left edge of the bottom-most S1 ops circle, routes horizontally left to a vertical column positioned **between the environment blob column and the S3\* triangle** (in the narrow gap between them), then runs straight up to the S5 midline and enters the S5 bar from the left. The signal is **unidirectional upward** — it bypasses S2, S3, S4 to deliver a threshold alarm directly to S5. Any response returns via normal command channels, not via this path.
 
@@ -153,14 +153,14 @@ Use a **portrait** canvas with approximate proportions matching `viewBox="0 0 90
 
 All clickable elements must indicate their interactivity through **hover color tint** alone — no additional icons or badges. A lighter fill on mouse-enter is sufficient affordance.
 
-| Element         | Hover affordance                    | Click action                              |
-| --------------- | ----------------------------------- | ----------------------------------------- |
-| S5, S4, S3 bars | Lighter fill tint                   | Emit `click:s5` / `click:s4` / `click:s3` |
-| S3\* triangle   | Lighter fill tint                   | Emit `click:s3star`                       |
-| S2 triangle     | Lighter fill tint                   | Emit `click:s2`                           |
+| Element         | Hover affordance                                           | Click action                              |
+| --------------- | ---------------------------------------------------------- | ----------------------------------------- |
+| S5, S4, S3 bars | Lighter fill tint                                          | Emit `click:s5` / `click:s4` / `click:s3` |
+| S3\* triangle   | Lighter fill tint                                          | Emit `click:s3star`                       |
+| S2 triangle     | Lighter fill tint                                          | Emit `click:s2`                           |
 | S1 unit         | Both circle and square get tint; full name tooltip appears | Emit `click:s1` with index and unit data  |
-| Env blob        | Lighter fill tint                   | Emit `click:env` with index and env data  |
-| Future env blob | Lighter fill tint                   | Emit `click:futureEnv`                    |
+| Env blob        | Lighter fill tint                                          | Emit `click:env` with index and env data  |
+| Future env blob | Lighter fill tint                                          | Emit `click:futureEnv`                    |
 
 **Selection highlight:** the most recently clicked element receives a dashed-border overlay (navy, dash 6/4) drawn on a dedicated top layer, padding the element's exact outline by ~3 px. The highlight is cleared on re-render and on drill-down/up.
 

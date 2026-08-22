@@ -29,10 +29,10 @@ const renderer = new VsmRenderer({
 
 ## Documentation
 
-| Document | Description |
-| -------- | ----------- |
-| [docs/DEVELOPER.md](docs/DEVELOPER.md) | Full API reference, event system, Konva internals |
-| [docs/NOTATION.md](docs/NOTATION.md) | Implementation-independent VSM notation specification |
+| Document                               | Description                                           |
+| -------------------------------------- | ----------------------------------------------------- |
+| [docs/DEVELOPER.md](docs/DEVELOPER.md) | Full API reference, event system, Konva internals     |
+| [docs/NOTATION.md](docs/NOTATION.md)   | Implementation-independent VSM notation specification |
 
 ## Features
 

@@ -8,7 +8,19 @@ import Konva from 'konva';
 import { ChannelId, ChannelVisibility, VsmSystem } from '../types';
 import { COLORS } from '../utils/palette';
 import { wave } from '../utils/geometry';
-import { S3STAR, S2, S3, S5, CIRCLE_X, CIRCLE_R, CMD_L, CMD_R, ENV_X, S1_MGMT_DY, rowY } from '../layout';
+import {
+  S3STAR,
+  S2,
+  S3,
+  S5,
+  CIRCLE_X,
+  CIRCLE_R,
+  CMD_L,
+  CMD_R,
+  ENV_X,
+  S1_MGMT_DY,
+  rowY,
+} from '../layout';
 
 export function renderChannelLayer(
   layer: Konva.Layer,
@@ -148,8 +160,8 @@ export function renderChannelLayer(
   // left edge (~x 330). Two-leg L-shape: horizontal from ops circle left edge
   // to ALG_X, then straight up to S5 mid-level, entering from the left.
   // -------------------------------------------------------------------------
-  const algDotX = CIRCLE_X - CIRCLE_R;           // left edge of S1 ops circles
-  const ALG_X   = 285;                            // between env right (~243) and S3* left (~330)
+  const algDotX = CIRCLE_X - CIRCLE_R; // left edge of S1 ops circles
+  const ALG_X = 285; // between env right (~243) and S3* left (~330)
   const algEntryY = S5.y + Math.round(S5.height / 2); // S5 vertical centre
   groups.g.add(
     new Konva.Circle({
@@ -162,10 +174,14 @@ export function renderChannelLayer(
   groups.g.add(
     new Konva.Line({
       points: [
-        algDotX - 5, lastY,      // depart leftward from ops circle left edge
-        ALG_X,       lastY,      // horizontal leg to vertical column
-        ALG_X,       algEntryY,  // vertical leg straight up to S5 midline
-        S5.x + 14,   algEntryY,  // enter S5 bar from the left
+        algDotX - 5,
+        lastY, // depart leftward from ops circle left edge
+        ALG_X,
+        lastY, // horizontal leg to vertical column
+        ALG_X,
+        algEntryY, // vertical leg straight up to S5 midline
+        S5.x + 14,
+        algEntryY, // enter S5 bar from the left
       ],
       stroke: COLORS.algedonic,
       strokeWidth: 2.4,
