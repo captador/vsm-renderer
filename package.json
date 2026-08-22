@@ -1,6 +1,6 @@
 {
   "name": "@captador/vsm-render",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Viable System Model rendering library - Konva-based visualization for VSM diagrams",
   "author": "Arseny Krasikov",
   "license": "EUPL-1.2",
