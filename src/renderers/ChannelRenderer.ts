@@ -123,31 +123,21 @@ export function renderChannelLayer(
   );
 
   // -------------------------------------------------------------------------
-  // Channel f — S2 coordination: vertical amber line + rungs to both mgmt and ops
-  // Per Beer's notation S2 connects to both S1 management and S1 operations.
+  // Channel f — S2 coordination: vertical amber line + rungs to S1 mgmt only
   // -------------------------------------------------------------------------
   groups.f.add(
     new Konva.Line({
-      points: [S2.cx, S2.botY, S2.cx, lastY],
+      points: [S2.cx, S2.botY, S2.cx, lastMgmtY],
       stroke: COLORS.amber,
       strokeWidth: 4.5,
     })
   );
   for (let i = 0; i < n; i++) {
-    const y = rowY(i);
-    const my = y - S1_MGMT_DY;
+    const my = rowY(i) - S1_MGMT_DY;
     // rung to management square
     groups.f.add(
       new Konva.Line({
         points: [621, my, S2.cx, my],
-        stroke: COLORS.amber,
-        strokeWidth: 3.6,
-      })
-    );
-    // rung to operation circle (from right edge of circle to S2 spine)
-    groups.f.add(
-      new Konva.Line({
-        points: [CIRCLE_X + CIRCLE_R, y, S2.cx, y],
         stroke: COLORS.amber,
         strokeWidth: 3.6,
       })
