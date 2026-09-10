@@ -162,7 +162,7 @@ describe('renderEnvironmentLayer()', () => {
 
     // futureBlob is the first Group created
     registry.groups[0].fire('click');
-    expect(emit).toHaveBeenCalledWith({ type: 'click:futureEnv' });
+    expect(emit).toHaveBeenCalledWith({ type: 'click:futureEnv', id: 'env-test-future' });
   });
 
   it('hovering over the future environment group triggers mouseenter without throwing', () => {
@@ -249,47 +249,47 @@ describe('renderMetasystemLayer()', () => {
 
   it('clicking System 5 emits click:s5', () => {
     const emit = vi.fn();
-    renderMetasystemLayer(mockLayer(), emit);
+    renderMetasystemLayer(mockLayer(), makeSystem('meta'), emit);
 
     // Groups created in order: s5(0), s4(1), s3(2), s3star(3), s2(4)
     registry.groups[0].fire('click');
-    expect(emit).toHaveBeenCalledWith({ type: 'click:s5' });
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s5', id: 'meta-s5' });
   });
 
   it('clicking System 4 emits click:s4', () => {
     const emit = vi.fn();
-    renderMetasystemLayer(mockLayer(), emit);
+    renderMetasystemLayer(mockLayer(), makeSystem('meta'), emit);
 
     registry.groups[1].fire('click');
-    expect(emit).toHaveBeenCalledWith({ type: 'click:s4' });
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s4', id: 'meta-s4' });
   });
 
   it('clicking System 3 emits click:s3', () => {
     const emit = vi.fn();
-    renderMetasystemLayer(mockLayer(), emit);
+    renderMetasystemLayer(mockLayer(), makeSystem('meta'), emit);
 
     registry.groups[2].fire('click');
-    expect(emit).toHaveBeenCalledWith({ type: 'click:s3' });
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s3', id: 'meta-s3' });
   });
 
   it('clicking the S3* (audit) triangle emits click:s3star', () => {
     const emit = vi.fn();
-    renderMetasystemLayer(mockLayer(), emit);
+    renderMetasystemLayer(mockLayer(), makeSystem('meta'), emit);
 
     registry.groups[3].fire('click');
-    expect(emit).toHaveBeenCalledWith({ type: 'click:s3star' });
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s3star', id: 'meta-s3star' });
   });
 
   it('clicking the S2 (coordination) triangle emits click:s2', () => {
     const emit = vi.fn();
-    renderMetasystemLayer(mockLayer(), emit);
+    renderMetasystemLayer(mockLayer(), makeSystem('meta'), emit);
 
     registry.groups[4].fire('click');
-    expect(emit).toHaveBeenCalledWith({ type: 'click:s2' });
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s2', id: 'meta-s2' });
   });
 
   it('hovering over metasystem bars triggers mouseenter without throwing', () => {
-    renderMetasystemLayer(mockLayer(), vi.fn());
+    renderMetasystemLayer(mockLayer(), makeSystem('meta'), vi.fn());
 
     for (let i = 0; i < 5; i++) {
       expect(() => registry.groups[i].fire('mouseenter')).not.toThrow();
@@ -297,7 +297,7 @@ describe('renderMetasystemLayer()', () => {
   });
 
   it('mousing out of metasystem elements triggers mouseleave without throwing', () => {
-    renderMetasystemLayer(mockLayer(), vi.fn());
+    renderMetasystemLayer(mockLayer(), makeSystem('meta'), vi.fn());
 
     for (let i = 0; i < 5; i++) {
       expect(() => registry.groups[i].fire('mouseleave')).not.toThrow();
@@ -311,7 +311,7 @@ describe('renderMetasystemLayer()', () => {
       destroyChildren: vi.fn(),
       getStage: vi.fn(() => null),
     };
-    renderMetasystemLayer(nullStageLayer as any, vi.fn());
+    renderMetasystemLayer(nullStageLayer as any, makeSystem('meta'), vi.fn());
 
     for (let i = 0; i < 5; i++) {
       expect(() => registry.groups[i].fire('mouseenter')).not.toThrow();
@@ -326,7 +326,7 @@ describe('renderMetasystemLayer()', () => {
       destroyChildren: vi.fn(),
       getStage: vi.fn(() => ({ container: () => null })),
     };
-    renderMetasystemLayer(noStyleLayer as any, vi.fn());
+    renderMetasystemLayer(noStyleLayer as any, makeSystem('meta'), vi.fn());
 
     for (let i = 0; i < 5; i++) {
       expect(() => registry.groups[i].fire('mouseenter')).not.toThrow();
@@ -385,12 +385,18 @@ describe('renderUnitsLayer()', () => {
     expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'drillDown', index: 0 }));
   });
 
-  it('does not register dblclick on a leaf (non-holon) unit', () => {
+  it('registers dblclick on a leaf (non-holon) unit for dblclick:s1', () => {
     const system = makeSystem('leaf', 1);
+    const emit = vi.fn();
 
-    renderUnitsLayer(mockLayer(), system, vi.fn());
+    renderUnitsLayer(mockLayer(), system, emit);
 
-    expect(registry.groups[0].handlers.has('dblclick')).toBe(false);
+    const fakeEvent = { cancelBubble: false };
+    registry.groups[0].fire('dblclick', fakeEvent);
+
+    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dblclick:s1', index: 0 }));
+    // drillDown must NOT fire for a leaf unit
+    expect(emit).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'drillDown' }));
   });
 
   it('hovering over a unit triggers mouseenter without throwing', () => {

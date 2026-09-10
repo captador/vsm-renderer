@@ -714,7 +714,7 @@ describe('VsmRenderer', () => {
       onEvent.mockClear();
 
       mockGroupRegistry.groups[G.s3star].fire('click');
-      expect(onEvent).toHaveBeenCalledWith({ type: 'click:s3star' });
+      expect(onEvent).toHaveBeenCalledWith({ type: 'click:s3star', id: 'root-s3star' });
     });
 
     it('clicking the S2 triangle emits click:s2', () => {
@@ -723,7 +723,7 @@ describe('VsmRenderer', () => {
       onEvent.mockClear();
 
       mockGroupRegistry.groups[G.s2].fire('click');
-      expect(onEvent).toHaveBeenCalledWith({ type: 'click:s2' });
+      expect(onEvent).toHaveBeenCalledWith({ type: 'click:s2', id: 'root-s2' });
     });
 
     it('clicking the future environment emits click:futureEnv', () => {
@@ -732,7 +732,7 @@ describe('VsmRenderer', () => {
       onEvent.mockClear();
 
       mockGroupRegistry.groups[G.futureBlob].fire('click');
-      expect(onEvent).toHaveBeenCalledWith({ type: 'click:futureEnv' });
+      expect(onEvent).toHaveBeenCalledWith({ type: 'click:futureEnv', id: 'root-future' });
     });
 
     it('clicking a sub-environment emits click:env', () => {
