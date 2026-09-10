@@ -31,7 +31,12 @@ export function renderEnvironmentLayer(
   emit: (e: VsmEvent) => void
 ): void {
   const n = system.s1.length;
-  const lastY = rowY(Math.max(n, 1) - 1);
+  const envLen = system.environments.length;
+  // Rows that have both an s1 unit and an env blob — eye-loops connect these.
+  const mappedCount = Math.min(n, envLen);
+  // Total rows to allocate vertical space for (whichever array is longer).
+  const totalRows = Math.max(n, envLen, 1);
+  const lastY = rowY(totalRows - 1);
 
   // --- Outer silhouette (large grey amoeba encompassing everything) ---
   layer.add(
@@ -71,45 +76,64 @@ export function renderEnvironmentLayer(
   });
   futureBlob.on('click', handleFutureEnvClick(emit));
 
-  // --- Sub-environment blobs (one per S1 unit) ---
+  // --- Sub-environment blobs ---
+  // Indices 0..envLen-1 are rendered; indices >= n are "not-mapped" slices.
   const envGroup = new Konva.Group();
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < envLen; i++) {
     const y = rowY(i);
-    const envBlob = system.environments[i];
+    const envBlobData = system.environments[i];
+    const isUnmapped = i >= n;
 
-    const envBlobGroup = new Konva.Group({ name: `env-${i}`, opacity: 0.72 });
+    const fill = isUnmapped ? COLORS.envBlobUnmapped : COLORS.envBlob;
+    const opacity = isUnmapped ? 0.55 : 0.72;
+
+    const envBlobGroup = new Konva.Group({ name: `env-${i}`, opacity });
 
     const envPath = new Konva.Path({
       data: blob(ENV_X, y, 43, 86, i + 3, 0.6),
-      fill: COLORS.envBlob,
+      fill,
     });
     envBlobGroup.add(envPath);
 
-    const envFill = COLORS.envBlob;
-    const envFillHover = lightenHex(envFill, 30);
+    if (isUnmapped) {
+      // "?" label to signal the complexity slice is not yet mapped
+      envBlobGroup.add(
+        new Konva.Text({
+          x: ENV_X - 8,
+          y: y - 10,
+          text: '?',
+          fontSize: 18,
+          fontStyle: 'bold',
+          fontFamily: '-apple-system, system-ui, sans-serif',
+          fill: '#777',
+          listening: false,
+        })
+      );
+    }
+
+    const fillHover = lightenHex(fill, 30);
 
     envBlobGroup.on('mouseenter', () => {
-      envPath.fill(envFillHover);
+      envPath.fill(fillHover);
       layer.batchDraw();
       const stage = layer.getStage();
       if (stage?.container()?.style) stage.container()!.style.cursor = 'pointer';
     });
     envBlobGroup.on('mouseleave', () => {
-      envPath.fill(envFill);
+      envPath.fill(fill);
       layer.batchDraw();
       const stage = layer.getStage();
       if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
     });
-    envBlobGroup.on('click', createEnvClickHandler(emit, i, envBlob));
+    envBlobGroup.on('click', createEnvClickHandler(emit, i, envBlobData));
 
     envGroup.add(envBlobGroup);
   }
   layer.add(envGroup);
 
-  // --- Eye-loops: amplifier/attenuator arcs for each S1 unit ---
-  // Cubic-bezier ovals between the env blob edge and the operation circle
+  // --- Eye-loops: only for rows that have both an s1 unit and an env blob ---
   const eyeGroup = new Konva.Group({ opacity: 0.85 });
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < mappedCount; i++) {
     const y = rowY(i);
 
     // Upper arc: circle → env blob (input / attenuator)

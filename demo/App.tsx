@@ -49,11 +49,14 @@ function createSystem(name: string, s1Units: S1Unit[]): VsmSystem {
       s4: { id: `${name}-s4`, name: 'Intelligence' },
       s5: { id: `${name}-s5`, name: 'Policy/Identity' },
     },
-    environments: s1Units.map((u, i) => ({
-      id: `${u.id}-env`,
-      s1Id: u.id,
-      name: `Env ${String.fromCharCode(97 + i)}`,
-    })),
+    environments: [
+      ...s1Units.map((u, i) => ({
+        id: `${u.id}-env`,
+        s1Id: u.id,
+        name: `Env ${String.fromCharCode(97 + i)}`,
+      })),
+      { id: `${name}-env-unmapped`, s1Id: '', name: 'Unmapped slice' },
+    ],
     futureEnvironment: { id: `${name}-future`, name: 'Future Environment' },
   };
 }

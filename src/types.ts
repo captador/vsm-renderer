@@ -101,7 +101,15 @@ export interface VsmSystem {
   /** One or more operational units. Length N determines diagram height. */
   s1: S1Unit[];
   metasystem: Metasystem;
-  /** Exactly one per S1 unit, in the same order as `s1[]`. */
+  /**
+   * Environment blobs, in the same order as `s1[]`. The array may contain
+   * *more* entries than `s1` — extra blobs (at indices ≥ `s1.length`) are
+   * rendered as **not-mapped complexity slices**: they appear with a distinct
+   * style and no eye-loops, signalling that those S1 units have not yet been
+   * defined.
+   *
+   * Minimum length: `s1.length` (one blob per mapped unit).
+   */
   environments: EnvBlob[];
   futureEnvironment: FutureEnvironment;
 }

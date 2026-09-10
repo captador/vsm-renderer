@@ -28,8 +28,12 @@ export function renderChannelLayer(
   channels: ChannelVisibility
 ): Record<ChannelId, Konva.Group> {
   const n = system.s1.length;
+  const envLen = system.environments.length;
+  // Only connect channels to s1 units that have a paired environment blob.
+  const mappedCount = Math.min(n, envLen);
   const lastY = rowY(Math.max(n, 1) - 1);
-  const lastMgmtY = lastY - S1_MGMT_DY; // Y of the lowest management square
+  const lastMappedY = rowY(Math.max(mappedCount, 1) - 1);
+  const lastMgmtY = lastMappedY - S1_MGMT_DY;
   const groups = {} as Record<ChannelId, Konva.Group>;
 
   // Create one group per channel
@@ -40,8 +44,9 @@ export function renderChannelLayer(
 
   // -------------------------------------------------------------------------
   // Channel a — Environmental overlaps: amber lens shapes between sub-env blobs
+  // Spans all adjacent env blobs, including not-mapped ones.
   // -------------------------------------------------------------------------
-  for (let i = 0; i < n - 1; i++) {
+  for (let i = 0; i < envLen - 1; i++) {
     const ym = (rowY(i) + rowY(i + 1)) / 2;
     groups.a.add(
       new Konva.Ellipse({
@@ -60,12 +65,12 @@ export function renderChannelLayer(
   // -------------------------------------------------------------------------
   groups.b.add(
     new Konva.Line({
-      points: [S3STAR.cx, S3STAR.botY - 2, S3STAR.cx, lastY],
+      points: [S3STAR.cx, S3STAR.botY - 2, S3STAR.cx, lastMappedY],
       stroke: COLORS.red,
       strokeWidth: 3.6,
     })
   );
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < mappedCount; i++) {
     const y = rowY(i);
     groups.b.add(
       new Konva.Line({
@@ -79,7 +84,7 @@ export function renderChannelLayer(
   // -------------------------------------------------------------------------
   // Channel c — Operational dependencies: wavy path between adjacent op circles
   // -------------------------------------------------------------------------
-  for (let i = 0; i < n - 1; i++) {
+  for (let i = 0; i < mappedCount - 1; i++) {
     groups.c.add(
       new Konva.Path({
         data: wave(CIRCLE_X, rowY(i) + CIRCLE_R, rowY(i + 1) - CIRCLE_R, 4),
@@ -100,7 +105,7 @@ export function renderChannelLayer(
       strokeWidth: 4.5,
     })
   );
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < mappedCount; i++) {
     const my = rowY(i) - S1_MGMT_DY;
     groups.d.add(
       new Konva.Line({
@@ -132,7 +137,7 @@ export function renderChannelLayer(
       strokeWidth: 4.5,
     })
   );
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < mappedCount; i++) {
     const my = rowY(i) - S1_MGMT_DY;
     // rung to management square
     groups.f.add(

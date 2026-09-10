@@ -15,6 +15,7 @@ export const COLORS = {
   envFuture: '#A2DAA0', // Future environment (pale green)
   envOuter: '#D7D7D7', // Outer environment amoeba
   envBlob: '#8F8F8F', // S1 sub-environment blobs
+  envBlobUnmapped: '#C0C0C0', // Not-mapped complexity slice
 
   // Connectors / strokes
   navy: '#1D3880', // Navy connectors
