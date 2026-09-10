@@ -58,8 +58,8 @@ export interface Metasystem {
  */
 export interface EnvBlob {
   id: string;
-  /** ID of the S1 unit this environment belongs to. */
-  s1Id: string;
+  /** ID of the S1 unit this environment belongs to. Optional for not-mapped slices. */
+  s1Id?: string;
   name?: string;
 }
 
@@ -158,19 +158,35 @@ export type ChannelVisibility = Record<ChannelId, boolean>;
  * ```
  */
 export type VsmEvent =
-  // Metasystem clicks
-  | { type: 'click:s5' }
-  | { type: 'click:s4' }
-  | { type: 'click:s3' }
-  | { type: 'click:s3star' }
-  | { type: 'click:s2' }
+  // Metasystem single clicks — carry the node id for direct lookup
+  | { type: 'click:s5'; id: string }
+  | { type: 'click:s4'; id: string }
+  | { type: 'click:s3'; id: string }
+  | { type: 'click:s3star'; id: string }
+  | { type: 'click:s2'; id: string }
+  // Metasystem double clicks
+  | { type: 'dblclick:s5'; id: string }
+  | { type: 'dblclick:s4'; id: string }
+  | { type: 'dblclick:s3'; id: string }
+  | { type: 'dblclick:s3star'; id: string }
+  | { type: 'dblclick:s2'; id: string }
   // Environment clicks
-  | { type: 'click:futureEnv' }
+  | { type: 'click:futureEnv'; id: string }
+  | { type: 'dblclick:futureEnv'; id: string }
   /** Fired when an S1 unit (op circle or mgmt square) is clicked. */
   | { type: 'click:s1'; index: number; unit: S1Unit }
+  /** Fired when an S1 unit is double-clicked. */
+  | { type: 'dblclick:s1'; index: number; unit: S1Unit }
   /** Fired when a sub-environment blob is clicked. */
   | { type: 'click:env'; index: number; env: EnvBlob }
+  /** Fired when a sub-environment blob is double-clicked. */
+  | { type: 'dblclick:env'; index: number; env: EnvBlob }
   | { type: 'click:channel'; channel: ChannelId }
+  // Canvas background
+  /** Fired when the user clicks empty canvas space (not on any element). */
+  | { type: 'click:background' }
+  /** Fired when the user double-clicks empty canvas space. */
+  | { type: 'dblclick:background' }
   // Navigation (managed by host; renderer responds to setSystem calls)
   | { type: 'drillDown'; index: number; unit: S1Unit; path: VsmSystem[] }
   | { type: 'drillUp'; path: VsmSystem[] }

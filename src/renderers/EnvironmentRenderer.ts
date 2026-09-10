@@ -13,8 +13,8 @@ const ENV_BLOB_EX = ENV_X + 40; // right edge of env blob (used for eye-loops)
 const EYE_CX = 462; // left edge of eye-loop (near circle left)
 const EYE_GAP = 11; // vertical gap at circle / blob edge
 
-function handleFutureEnvClick(emit: (e: VsmEvent) => void): () => void {
-  return () => emit({ type: 'click:futureEnv' });
+function handleFutureEnvClick(emit: (e: VsmEvent) => void, id: string): () => void {
+  return () => emit({ type: 'click:futureEnv', id });
 }
 
 function createEnvClickHandler(
@@ -74,7 +74,11 @@ export function renderEnvironmentLayer(
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
   });
-  futureBlob.on('click', handleFutureEnvClick(emit));
+  futureBlob.on('click', handleFutureEnvClick(emit, system.futureEnvironment.id));
+  futureBlob.on('dblclick', (e) => {
+    e.cancelBubble = true;
+    emit({ type: 'dblclick:futureEnv', id: system.futureEnvironment.id });
+  });
 
   // --- Sub-environment blobs ---
   // Indices 0..envLen-1 are rendered; indices >= n are "not-mapped" slices.
@@ -126,6 +130,10 @@ export function renderEnvironmentLayer(
       if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
     });
     envBlobGroup.on('click', createEnvClickHandler(emit, i, envBlobData));
+    envBlobGroup.on('dblclick', (e) => {
+      e.cancelBubble = true;
+      emit({ type: 'dblclick:env', index: i, env: envBlobData });
+    });
 
     envGroup.add(envBlobGroup);
   }

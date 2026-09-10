@@ -5,16 +5,19 @@
  */
 
 import Konva from 'konva';
-import type { VsmEvent } from '../types';
+import type { VsmEvent, VsmSystem } from '../types';
 import { COLORS, lightenHex } from '../utils/palette';
 import { S5, S4, S3, S3STAR, S2, CMD_L, CMD_R, ENV_X } from '../layout';
+
+type MetaKey = 's2' | 's3' | 's3star' | 's4' | 's5';
 
 function bar(
   label: string,
   color: string,
   rect: { x: number; y: number; width: number; height: number },
   emit: (e: VsmEvent) => void,
-  eventEl: VsmEvent & { type: 'select' },
+  key: MetaKey,
+  id: string,
   layer: Konva.Layer
 ): Konva.Group {
   const g = new Konva.Group();
@@ -60,27 +63,20 @@ function bar(
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
   });
 
-  g.on('click', () => {
-    handleBarClick(emit, eventEl);
+  g.on('click', () => emit({ type: `click:${key}`, id } as VsmEvent));
+  g.on('dblclick', (e) => {
+    e.cancelBubble = true;
+    emit({ type: `dblclick:${key}`, id } as VsmEvent);
   });
 
   return g;
 }
 
-function handleBarClick(emit: (e: VsmEvent) => void, eventEl: VsmEvent & { type: 'select' }): void {
-  const { elementType } = eventEl;
-  if (
-    elementType === 's5' ||
-    elementType === 's4' ||
-    elementType === 's3' ||
-    elementType === 's3star' ||
-    elementType === 's2'
-  ) {
-    emit({ type: `click:${elementType}` } as VsmEvent);
-  }
-}
-
-export function renderMetasystemLayer(layer: Konva.Layer, emit: (e: VsmEvent) => void): void {
+export function renderMetasystemLayer(
+  layer: Konva.Layer,
+  system: VsmSystem,
+  emit: (e: VsmEvent) => void
+): void {
   // ── Spine connectors ─────────────────────────────────────────────────────
 
   // S5 ↔ S4 (blue)
@@ -141,9 +137,9 @@ export function renderMetasystemLayer(layer: Konva.Layer, emit: (e: VsmEvent) =>
 
   // ── Metasystem bars ──────────────────────────────────────────────────────
 
-  layer.add(bar('5', COLORS.s5, S5, emit, { type: 'select', elementType: 's5' }, layer));
-  layer.add(bar('4', COLORS.s4, S4, emit, { type: 'select', elementType: 's4' }, layer));
-  layer.add(bar('3', COLORS.s3, S3, emit, { type: 'select', elementType: 's3' }, layer));
+  layer.add(bar('5', COLORS.s5, S5, emit, 's5', system.metasystem.s5.id, layer));
+  layer.add(bar('4', COLORS.s4, S4, emit, 's4', system.metasystem.s4.id, layer));
+  layer.add(bar('3', COLORS.s3, S3, emit, 's3', system.metasystem.s3.id, layer));
 
   // ── S3* inverted triangle ▽ (LEFT) ──────────────────────────────────────
 
@@ -185,7 +181,11 @@ export function renderMetasystemLayer(layer: Konva.Layer, emit: (e: VsmEvent) =>
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
   });
-  s3starG.on('click', () => emit({ type: 'click:s3star' }));
+  s3starG.on('click', () => emit({ type: 'click:s3star', id: system.metasystem.s3star.id }));
+  s3starG.on('dblclick', (e) => {
+    e.cancelBubble = true;
+    emit({ type: 'dblclick:s3star', id: system.metasystem.s3star.id });
+  });
   layer.add(s3starG);
 
   // ── S2 upward triangle △ (RIGHT) ─────────────────────────────────────────
@@ -228,7 +228,11 @@ export function renderMetasystemLayer(layer: Konva.Layer, emit: (e: VsmEvent) =>
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
   });
-  s2G.on('click', () => emit({ type: 'click:s2' }));
+  s2G.on('click', () => emit({ type: 'click:s2', id: system.metasystem.s2.id }));
+  s2G.on('dblclick', (e) => {
+    e.cancelBubble = true;
+    emit({ type: 'dblclick:s2', id: system.metasystem.s2.id });
+  });
   layer.add(s2G);
 
   // ── S4 ↔ future env arcs (thin green, two-way) ───────────────────────────

@@ -379,7 +379,7 @@ export class VsmRenderer {
     // Render each layer using component renderers
     renderEnvironmentLayer(this.layers.env, this.system, (e) => this.emitEvent(e));
     this.renderChannelsLayer();
-    renderMetasystemLayer(this.layers.meta, (e) => this.emitEvent(e));
+    renderMetasystemLayer(this.layers.meta, this.system, (e) => this.emitEvent(e));
     renderUnitsLayer(this.layers.units, this.system, (e) => this.emitEvent(e));
     renderTopLayer(this.layers.top);
 
@@ -568,6 +568,13 @@ export class VsmRenderer {
           }),
         ]);
         break;
+      case 'dblclick:s1':
+      case 'dblclick:futureEnv':
+      case 'dblclick:env':
+        // Selection was already set by the preceding click event — no change needed.
+        break;
+      case 'click:background':
+      case 'dblclick:background':
       case 'drillDown':
       case 'drillUp':
       case 'ready':
@@ -719,9 +726,16 @@ export class VsmRenderer {
       stage.container().style.cursor = 'grab';
     });
 
-    // Double-click on empty canvas: drill up if possible, otherwise reset view
+    // Click on empty canvas
+    stage.on('click', (e) => {
+      if (e.target !== stage) return;
+      this.emitEvent({ type: 'click:background' });
+    });
+
+    // Double-click on empty canvas: emit event, then drill up or reset view
     stage.on('dblclick', (e) => {
       if (e.target !== stage) return;
+      this.emitEvent({ type: 'dblclick:background' });
       if (this._path.length > 0) {
         this.drillUp();
       } else {
