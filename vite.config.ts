@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
         entry: resolve(__dirname, 'src/index.ts'),
         name: 'VsmRender',
         formats: ['es', 'cjs'],
-        fileName: (format) => `vsm-render.${format === 'es' ? 'js' : 'cjs'}`,
+        fileName: (format) => `vsm-renderer.${format === 'es' ? 'js' : 'cjs'}`,
       },
       rollupOptions: {
         external: ['konva', 'react', 'react-dom', 'react/jsx-runtime'],

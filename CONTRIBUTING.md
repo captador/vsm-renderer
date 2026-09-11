@@ -1,6 +1,6 @@
-# Contributing to vsm-render
+# Contributing to vsm-renderer
 
-Thank you for your interest in contributing to vsm-render! We welcome contributions from everyone.
+Thank you for your interest in contributing to vsm-renderer! We welcome contributions from everyone.
 
 ## Code of Conduct
 
@@ -10,7 +10,7 @@ By participating in this project, you agree to abide by the [Code of Conduct](CO
 
 ### Reporting Bugs
 
-- Use the [GitHub Issues](https://github.com/arsenykrasikov/vsm-render/issues) to report bugs
+- Use the [GitHub Issues](https://github.com/arsenykrasikov/vsm-renderer/issues) to report bugs
 - Include a clear description of the issue
 - Provide steps to reproduce
 - Include relevant code snippets or screenshots
@@ -78,7 +78,7 @@ pnpm run format
 ## Project Structure
 
 ```
-vsm-render/
+vsm-renderer/
 ├── src/
 │   ├── VsmRenderer.ts           # Main renderer class
 │   ├── index.ts                # Public API exports

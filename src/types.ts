@@ -4,7 +4,7 @@
  * All types are exported from the package root so consumers can import them
  * directly:
  * ```typescript
- * import type { VsmSystem, VsmEvent, VsmRendererOptions } from 'vsm-render';
+ * import type { VsmSystem, VsmEvent, VsmRendererOptions } from 'vsm-renderer';
  * ```
  */
 

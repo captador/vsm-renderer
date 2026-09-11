@@ -63,7 +63,7 @@ const ICON_FULLSCREEN_EXIT = `<svg width="16" height="16" viewBox="0 0 20 20" fi
  * renderer.destroy();
  * ```
  *
- * @see {@link https://github.com/arsenykrasikov/vsm-render/blob/main/docs/DEVELOPER.md Developer Guide}
+ * @see {@link https://github.com/captador/vsm-renderer/blob/main/docs/DEVELOPER.md Developer Guide}
  */
 export class VsmRenderer {
   // Konva stage and layers

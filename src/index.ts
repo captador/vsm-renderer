@@ -44,7 +44,7 @@ export {
   AUDIT_X,
   LADDER_L,
   LADDER_R,
-  META_CX,
+  SPINE_X,
   MAX_ZOOM,
   MIN_ZOOM,
   rowY,

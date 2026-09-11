@@ -1,15 +1,15 @@
 # VSM Renderer — Developer Guide
 
-This guide covers the public API, event system, and internal Konva implementation for contributors and library consumers who want to integrate vsm-render at a deeper level.
+This guide covers the public API, event system, and internal Konva implementation for contributors and library consumers who want to integrate vsm-renderer at a deeper level.
 
 ---
 
 ## Installation
 
 ```bash
-pnpm add vsm-render konva
+pnpm add vsm-renderer konva
 # or
-npm install vsm-render konva
+npm install vsm-renderer konva
 ```
 
 Konva is a peer dependency and must be installed separately.
@@ -19,8 +19,8 @@ Konva is a peer dependency and must be installed separately.
 ## Quick start
 
 ```typescript
-import { VsmRenderer } from 'vsm-render';
-import type { VsmSystem, VsmEvent } from 'vsm-render';
+import { VsmRenderer } from 'vsm-renderer';
+import type { VsmSystem, VsmEvent } from 'vsm-renderer';
 
 const renderer = new VsmRenderer({
   container: document.getElementById('canvas')!,

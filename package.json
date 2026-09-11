@@ -1,16 +1,16 @@
 {
-  "name": "@captador/vsm-render",
+  "name": "@captador/vsm-renderer",
   "version": "0.3.0",
   "description": "Viable System Model rendering library - Konva-based visualization for VSM diagrams",
   "author": "Arseny Krasikov",
   "license": "EUPL-1.2",
-  "homepage": "https://github.com/arsenykrasikov/vsm-render#readme",
+  "homepage": "https://github.com/arsenykrasikov/vsm-renderer#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arsenykrasikov/vsm-render.git"
+    "url": "git+https://github.com/arsenykrasikov/vsm-renderer.git"
   },
   "bugs": {
-    "url": "https://github.com/arsenykrasikov/vsm-render/issues"
+    "url": "https://github.com/arsenykrasikov/vsm-renderer/issues"
   },
   "keywords": [
     "vsm",
@@ -26,13 +26,13 @@
     "cybernetics"
   ],
   "type": "module",
-  "main": "dist/vsm-render.cjs",
-  "module": "dist/vsm-render.js",
+  "main": "dist/vsm-renderer.cjs",
+  "module": "dist/vsm-renderer.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/vsm-render.js",
-      "require": "./dist/vsm-render.cjs",
+      "import": "./dist/vsm-renderer.js",
+      "require": "./dist/vsm-renderer.cjs",
       "types": "./dist/index.d.ts"
     }
   },

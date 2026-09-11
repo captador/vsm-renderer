@@ -26,7 +26,7 @@ import {
   AUDIT_X,
   LADDER_L,
   LADDER_R,
-  META_CX,
+  SPINE_X,
   MAX_ZOOM,
   MIN_ZOOM,
   rowY,
@@ -125,8 +125,8 @@ describe('Layout Constants', () => {
   });
 
   describe('Metasystem Spine', () => {
-    it('should have correct META_CX', () => {
-      expect(META_CX).toBe(568);
+    it('should have correct SPINE_X', () => {
+      expect(SPINE_X).toBe(568);
     });
   });
 

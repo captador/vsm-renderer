@@ -5,7 +5,7 @@ A Konva-based TypeScript library for rendering [Viable System Model](https://en.
 ## Installation
 
 ```bash
-pnpm add vsm-render konva
+pnpm add vsm-renderer konva
 ```
 
 Konva is a peer dependency and must be installed separately.
@@ -13,8 +13,8 @@ Konva is a peer dependency and must be installed separately.
 ## Quick start
 
 ```typescript
-import { VsmRenderer } from 'vsm-render';
-import type { VsmSystem, VsmEvent } from 'vsm-render';
+import { VsmRenderer } from 'vsm-renderer';
+import type { VsmSystem, VsmEvent } from 'vsm-renderer';
 
 const renderer = new VsmRenderer({
   container: document.getElementById('canvas')!,
