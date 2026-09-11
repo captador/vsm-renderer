@@ -6,7 +6,6 @@ export * from './constants';
 
 import { ROW_0, ROW_H } from './constants';
 
-
 /**
  * Y coordinate of the centre of the S1 unit at zero-based row index `i`.
  *
