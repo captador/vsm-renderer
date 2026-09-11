@@ -19,7 +19,7 @@ import {
   SQ_W,
   SQ_H,
   ENV_X,
-  ROW0,
+  ROW_0,
   ROW_H,
   CMD_L,
   CMD_R,
@@ -93,8 +93,8 @@ describe('Layout Constants', () => {
       expect(ENV_X).toBe(200);
     });
 
-    it('should have correct ROW0 position', () => {
-      expect(ROW0).toBe(380);
+    it('should have correct ROW_0', () => {
+      expect(ROW_0).toBe(380);
     });
 
     it('should have correct ROW_H', () => {
@@ -144,20 +144,20 @@ describe('Layout Constants', () => {
 describe('Layout Functions', () => {
   describe('rowY()', () => {
     it('should return correct Y for index 0', () => {
-      expect(rowY(0)).toBe(ROW0);
+      expect(rowY(0)).toBe(ROW_0);
     });
 
     it('should return correct Y for index 1', () => {
-      expect(rowY(1)).toBe(ROW0 + ROW_H);
+      expect(rowY(1)).toBe(ROW_0 + ROW_H);
     });
 
     it('should return correct Y for index 2', () => {
-      expect(rowY(2)).toBe(ROW0 + ROW_H * 2);
+      expect(rowY(2)).toBe(ROW_0 + ROW_H * 2);
     });
 
     it('should calculate Y correctly for any index', () => {
       const index = 5;
-      expect(rowY(index)).toBe(ROW0 + ROW_H * index);
+      expect(rowY(index)).toBe(ROW_0 + ROW_H * index);
     });
   });
 
