@@ -29,16 +29,19 @@ const renderer = new VsmRenderer({
 
 ## Documentation
 
-| Document                               | Description                                           |
-| -------------------------------------- | ----------------------------------------------------- |
-| [docs/DEVELOPER.md](docs/DEVELOPER.md) | Full API reference, event system, Konva internals     |
-| [docs/NOTATION.md](docs/NOTATION.md)   | Implementation-independent VSM notation specification |
+| Document                               | Description                                                    |
+| -------------------------------------- | -------------------------------------------------------------- |
+| [docs/DEVELOPER.md](docs/DEVELOPER.md) | Full API reference, event system, Konva internals              |
+| [docs/NOTATION.md](docs/NOTATION.md)   | Opinionated rendering guide: shapes, colours, layout, channels |
 
 ## Features
 
-- Full Beer VSM notation: S1–S5, S3\*, all 7 channels (a–g), environment column
+- Full Beer-style VSM layout: S1–S5, S3\*, all 7 channels (a–g), environment column
 - Recursive holons: S1 units can contain nested VSMs; thicker border signals drillability
+- Internal drill-down stack: double-clicking a holon drills in; double-clicking the background drills up; `drillDown` / `drillUp` events keep the host in sync
 - Channel toggling: each channel independently shown/hidden at O(1) cost
+- Click and double-click events on every diagram element (metasystem bars, triangles, S1 units, env blobs, background)
+- Level label overlay: shows the current system name and, when drilled in, the parent unit name
 - Zoom / pan / fullscreen controls (DOM overlay, unaffected by canvas transforms)
 - Click selection: dashed-border highlight on the active element
 - Hover tooltips on S1 units showing full name

@@ -39,16 +39,17 @@ const renderer = new VsmRenderer({
 
 All options are passed as a single object to `new VsmRenderer(options)`.
 
-| Option      | Type                         | Required | Default         | Description                                                        |
-| ----------- | ---------------------------- | -------- | --------------- | ------------------------------------------------------------------ |
-| `container` | `HTMLElement \| string`      | yes      | —               | DOM element or CSS selector (`'#my-div'`) that receives the canvas |
-| `system`    | `VsmSystem`                  | yes      | —               | Initial VSM data tree to render                                    |
-| `onEvent`   | `(event: VsmEvent) => void`  | yes      | —               | Callback fired for every user interaction and lifecycle event      |
-| `channels`  | `Partial<ChannelVisibility>` | no       | all on except g | Initial channel visibility; omitted channels keep their defaults   |
-| `width`     | `number`                     | no       | `900`           | Canvas width in pixels                                             |
-| `height`    | `number`                     | no       | `1100`          | Canvas height in pixels                                            |
+| Option       | Type                         | Required | Default         | Description                                                                 |
+| ------------ | ---------------------------- | -------- | --------------- | --------------------------------------------------------------------------- |
+| `container`  | `HTMLElement \| string`      | yes      | —               | DOM element or CSS selector (`'#my-div'`) that receives the canvas          |
+| `system`     | `VsmSystem`                  | yes      | —               | Initial VSM data tree to render                                             |
+| `onEvent`    | `(event: VsmEvent) => void`  | no       | —               | Callback fired for every user interaction and lifecycle event               |
+| `channels`   | `Partial<ChannelVisibility>` | no       | all on except g | Initial channel visibility; omitted channels keep their defaults            |
+| `width`      | `number`                     | no       | `900`           | Canvas width in pixels                                                      |
+| `height`     | `number`                     | no       | `1100`          | Canvas height in pixels                                                     |
+| `levelLabel` | `string`                     | no       | —               | Context label shown above the system name (e.g. the drilled-into unit name) |
 
-The container element will have `position: relative` set on it and will receive two injected children: the Konva `div.konvajs-content` wrapper and the controls overlay `div`.
+The container element will have `position: relative` set on it and will receive three injected children: the Konva `div.konvajs-content` wrapper, the controls overlay `div` (top-right), and the system label overlay `div` (top-left).
 
 ---
 
@@ -56,14 +57,38 @@ The container element will have `position: relative` set on it and will receive 
 
 ### `setSystem(system: VsmSystem): void`
 
-Replace the rendered VSM with a new system and re-draw all layers. Use this when drilling down or up in the recursion hierarchy.
+Replace the rendered VSM with a new system and re-draw all layers.
 
 ```typescript
 renderer.setSystem(unit.children!); // drill into sub-VSM
 renderer.setSystem(parentSystem); // drill back up
 ```
 
-The selection highlight is cleared automatically on each `setSystem` call.
+The selection highlight is cleared automatically on each `setSystem` call. Note that `setSystem` does **not** update the internal breadcrumb stack — use `drillUp()` or respond to `drillDown` / `drillUp` events for stack-aware navigation.
+
+### `drillUp(): void`
+
+Navigate up one level in the internal breadcrumb stack. Pops the most recent ancestor, re-renders it, and emits `{ type: 'drillUp', path }` with the remaining stack. Does nothing if already at the root level.
+
+```typescript
+renderer.drillUp(); // go back to parent VSM
+```
+
+Double-clicking the canvas background also triggers `drillUp()` automatically when a stack is present, or resets the view when at root.
+
+### `setLevelLabel(label: string | null): void`
+
+Update the context label shown above the system name in the top-left overlay. Pass `null` to revert to the single system-name-only display.
+
+```typescript
+// drill down
+renderer.setSystem(unit.children!);
+renderer.setLevelLabel(unit.name); // e.g. "Operations Unit A"
+
+// navigate back up
+renderer.setSystem(parentSystem);
+renderer.setLevelLabel(null);
+```
 
 ### `setChannels(channels: Partial<ChannelVisibility>): void`
 
@@ -94,7 +119,7 @@ Alias for `fitView()`.
 
 ### `destroy(): void`
 
-Tear down the Konva stage, remove the controls overlay DOM element, and de-register all event listeners. Call this in framework cleanup hooks (React `useEffect` return, Vue `onUnmounted`, etc.).
+Tear down the Konva stage, remove the controls and system-label overlay DOM elements, and de-register all event listeners. Call this in framework cleanup hooks (React `useEffect` return, Vue `onUnmounted`, etc.).
 
 ```typescript
 useEffect(() => {
@@ -111,17 +136,38 @@ All events are delivered via the `onEvent` callback. The `VsmEvent` union type i
 
 ### Interaction events
 
-| `event.type`      | Extra fields                    | Fired when                                     |
-| ----------------- | ------------------------------- | ---------------------------------------------- |
-| `click:s5`        | —                               | User clicks the S5 bar                         |
-| `click:s4`        | —                               | User clicks the S4 bar                         |
-| `click:s3`        | —                               | User clicks the S3 bar                         |
-| `click:s3star`    | —                               | User clicks the S3\* triangle                  |
-| `click:s2`        | —                               | User clicks the S2 triangle                    |
-| `click:s1`        | `index: number`, `unit: S1Unit` | User clicks an S1 unit (op circle or mgmt box) |
-| `click:env`       | `index: number`, `env: EnvBlob` | User clicks an S1 sub-environment blob         |
-| `click:futureEnv` | —                               | User clicks the future-environment blob        |
-| `click:channel`   | `channel: ChannelId`            | Reserved; not currently emitted                |
+| `event.type`          | Extra fields                    | Fired when                                     |
+| --------------------- | ------------------------------- | ---------------------------------------------- |
+| `click:s5`            | `id: string`                    | User clicks the S5 bar                         |
+| `click:s4`            | `id: string`                    | User clicks the S4 bar                         |
+| `click:s3`            | `id: string`                    | User clicks the S3 bar                         |
+| `click:s3star`        | `id: string`                    | User clicks the S3\* triangle                  |
+| `click:s2`            | `id: string`                    | User clicks the S2 triangle                    |
+| `click:s1`            | `index: number`, `unit: S1Unit` | User clicks an S1 unit (op circle or mgmt box) |
+| `click:env`           | `index: number`, `env: EnvBlob` | User clicks an S1 sub-environment blob         |
+| `click:futureEnv`     | `id: string`                    | User clicks the future-environment blob        |
+| `click:background`    | —                               | User clicks empty canvas space                 |
+| `click:channel`       | `channel: ChannelId`            | Reserved; not currently emitted                |
+| `dblclick:s5`         | `id: string`                    | User double-clicks the S5 bar                  |
+| `dblclick:s4`         | `id: string`                    | User double-clicks the S4 bar                  |
+| `dblclick:s3`         | `id: string`                    | User double-clicks the S3 bar                  |
+| `dblclick:s3star`     | `id: string`                    | User double-clicks the S3\* triangle           |
+| `dblclick:s2`         | `id: string`                    | User double-clicks the S2 triangle             |
+| `dblclick:s1`         | `index: number`, `unit: S1Unit` | User double-clicks an S1 unit                  |
+| `dblclick:env`        | `index: number`, `env: EnvBlob` | User double-clicks a sub-environment blob      |
+| `dblclick:futureEnv`  | `id: string`                    | User double-clicks the future-environment blob |
+| `dblclick:background` | —                               | User double-clicks empty canvas space          |
+
+### Navigation events
+
+The renderer manages its own internal breadcrumb stack. Navigation events are emitted after the renderer has already transitioned to the new system.
+
+| `event.type` | Extra fields                                         | Fired when                                                                |
+| ------------ | ---------------------------------------------------- | ------------------------------------------------------------------------- |
+| `drillDown`  | `index: number`, `unit: S1Unit`, `path: VsmSystem[]` | A holon S1 unit was double-clicked; renderer drilled into `unit.children` |
+| `drillUp`    | `path: VsmSystem[]`                                  | `drillUp()` was called (or canvas was double-clicked at non-root level)   |
+
+`path` is the breadcrumb stack **after** the transition — an empty array means the root is now active.
 
 ### Lifecycle events
 
@@ -131,21 +177,32 @@ All events are delivered via the `onEvent` callback. The `VsmEvent` union type i
 
 ### Navigation pattern
 
-The renderer does **not** manage the recursion stack internally. The host application owns navigation state:
+The renderer maintains its own breadcrumb stack internally. The host application can listen to `drillDown` and `drillUp` events to mirror that state (e.g. for a breadcrumb UI), but does not need to call `setSystem` in response — the renderer has already transitioned.
 
 ```typescript
-const [stack, setStack] = useState([rootSystem]);
+const renderer = new VsmRenderer({
+  container,
+  system: rootSystem,
+  onEvent(event) {
+    if (event.type === 'drillDown') {
+      // event.path reflects the updated stack after drilling in
+      setBreadcrumbs(event.path);
+      renderer.setLevelLabel(event.unit.name);
+    }
+    if (event.type === 'drillUp') {
+      setBreadcrumbs(event.path);
+      renderer.setLevelLabel(event.path.at(-1)?.name ?? null);
+    }
+  },
+});
+```
 
-onEvent={(event) => {
-  if (event.type === 'click:s1' && event.unit.children) {
-    setStack(prev => [...prev, event.unit.children!]);
-  }
-}}
+To drill down programmatically (without a double-click):
 
-// When stack changes, push the new system to the renderer:
-useEffect(() => {
-  renderer.setSystem(stack[stack.length - 1]);
-}, [stack]);
+```typescript
+// renderer handles the stack and re-render internally
+renderer.setSystem(unit.children!);
+renderer.setLevelLabel(unit.name);
 ```
 
 ---
@@ -160,7 +217,12 @@ interface VsmSystem {
   name: string;
   s1: S1Unit[]; // ≥ 1 operational units
   metasystem: Metasystem; // exactly one S2, S3, S3*, S4, S5
-  environments: EnvBlob[]; // parallel to s1[], one per unit
+  /**
+   * Parallel to s1[] for mapped units. Extra entries (index ≥ s1.length)
+   * render as not-mapped complexity slices — distinct style, no eye-loops.
+   * Minimum length: s1.length.
+   */
+  environments: EnvBlob[];
   futureEnvironment: FutureEnvironment;
 }
 ```
@@ -178,6 +240,39 @@ interface S1Unit {
 ```
 
 Units with `children` are rendered with a thicker border (stroke ~3.5 px vs ~2 px) to signal drillability without an explicit icon.
+
+### `Metasystem`
+
+```typescript
+interface Metasystem {
+  s2: { id: string; name?: string };
+  s3: { id: string; name?: string };
+  s3star: { id: string; name?: string };
+  s4: { id: string; name?: string };
+  s5: { id: string; name?: string };
+}
+```
+
+`name` is optional on every sub-system and is used only for display in a host UI info panel.
+
+### `EnvBlob`
+
+```typescript
+interface EnvBlob {
+  id: string;
+  s1Id?: string; // ID of the mapped S1 unit; omit for not-mapped slices
+  name?: string;
+}
+```
+
+### `FutureEnvironment`
+
+```typescript
+interface FutureEnvironment {
+  id: string;
+  name?: string;
+}
+```
 
 ### `ChannelVisibility`
 
@@ -221,29 +316,40 @@ All six layers are added to a single `Konva.Stage`. The selection layer is the t
 
 **Controls overlay.** Zoom/pan controls are plain DOM `<button>` elements appended to the container element (not Konva shapes), positioned `position: absolute; top: 16px; right: 16px` so they remain fixed in the container viewport regardless of canvas pan/zoom transforms. Fullscreen uses the browser Fullscreen API; the `fullscreenchange` event listener is cleaned up in `destroy()`.
 
+**System label overlay.** A `<div>` injected at `top: 12px; left: 12px` displays the current system name. When `levelLabel` is set it shows two lines: the label (bold navy, 14 px) and `system.name` (grey, 11 px). Updated on every `setSystem` / `setLevelLabel` call without touching the Konva stage.
+
 ---
 
 ## Layout constants (`src/layout/constants.ts`)
 
 Key values driving the coordinate system:
 
-| Constant        | Value | Description                                  |
-| --------------- | ----- | -------------------------------------------- |
-| `CANVAS_WIDTH`  | 900   | Default stage width                          |
-| `CANVAS_HEIGHT` | 1100  | Default stage height                         |
-| `CIRCLE_X`      | 490   | X centre of S1 operation circles             |
-| `CIRCLE_R`      | 25    | Radius of S1 operation circles               |
-| `SQ_CX`         | 568   | X centre of S1 management squares            |
-| `SQ_W`          | 102   | Width of S1 management squares               |
-| `SQ_H`          | 48    | Height of S1 management squares              |
-| `S1_MGMT_DY`    | 48    | Vertical offset: mgmt square above op circle |
-| `ROW_0`         | 380   | Y of the first S1 row (index 0)              |
-| `ROW_H`         | 112   | Vertical step between consecutive S1 rows    |
-| `ENV_X`         | 200   | X centre of the environment column           |
-| `CMD_L`         | 561   | Left command line X (channel e spine)        |
-| `CMD_R`         | 575   | Right resource line X (channel d spine)      |
-| `MAX_ZOOM`      | 6     | Maximum zoom factor                          |
-| `MIN_ZOOM`      | 0.1   | Minimum zoom factor                          |
+| Constant        | Value                                    | Description                                      |
+| --------------- | ---------------------------------------- | ------------------------------------------------ |
+| `CANVAS_WIDTH`  | `900`                                    | Default stage width                              |
+| `CANVAS_HEIGHT` | `1100`                                   | Default stage height                             |
+| `S5`            | `{ x:493, y:42, width:150, height:46 }`  | S5 bar bounding box (top-left corner)            |
+| `S4`            | `{ x:493, y:112, width:150, height:38 }` | S4 bar bounding box                              |
+| `S3`            | `{ x:493, y:194, width:150, height:48 }` | S3 bar bounding box                              |
+| `S3STAR`        | `{ cx:360, topY:230, botY:285 }`         | S3\* inverted triangle geometry                  |
+| `S2`            | `{ cx:748, topY:230, botY:285 }`         | S2 upward triangle geometry                      |
+| `CIRCLE_X`      | `490`                                    | X centre of S1 operation circles                 |
+| `CIRCLE_R`      | `25`                                     | Radius of S1 operation circles                   |
+| `SQ_CX`         | `568`                                    | X centre of S1 management squares                |
+| `SQ_W`          | `102`                                    | Width of S1 management squares                   |
+| `SQ_H`          | `48`                                     | Height of S1 management squares                  |
+| `S1_MGMT_DY`    | `48`                                     | Vertical offset: mgmt square above op circle     |
+| `SPINE_X`       | `568`                                    | Metasystem spine X (S5/S4/S3 bars centred on)    |
+| `CMD_L`         | `561`                                    | Left command line X (channel e spine)            |
+| `CMD_R`         | `575`                                    | Right resource line X (channel d spine)          |
+| `AUDIT_X`       | `458`                                    | S3\* audit drop line X (channel b)               |
+| `LADDER_L`      | `680`                                    | Left edge of S2 coordination ladder (channel f)  |
+| `LADDER_R`      | `702`                                    | Right edge of S2 coordination ladder (channel f) |
+| `ROW_0`         | `380`                                    | Y of the first S1 row (index 0)                  |
+| `ROW_H`         | `112`                                    | Vertical step between consecutive S1 rows        |
+| `ENV_X`         | `200`                                    | X centre of the environment column               |
+| `MAX_ZOOM`      | `6`                                      | Maximum zoom factor                              |
+| `MIN_ZOOM`      | `0.1`                                    | Minimum zoom factor                              |
 
 Row Y coordinates are computed by `rowY(i) = ROW_0 + i * ROW_H`. Management square Y centre is `rowY(i) - S1_MGMT_DY`.
 

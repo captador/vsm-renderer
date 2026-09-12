@@ -1,17 +1,19 @@
-# VSM Notation Standard
+# VSM Rendering Guide
 
 **Version:** 1.1  
 **License:** EUPL-1.2
 
-This document is the authoritative, **implementation-independent** specification for rendering the Viable System Model (VSM). Any rendering library — React, Vue, Canvas, SVG, PDF — that claims VSM Notation 1.1 compliance must conform to this spec.
+This document describes one opinionated way to render the Viable System Model (VSM) — the choices made by this library. VSM has no single canonical visual standard; Beer's original diagrams, academic literature, and practitioner tools all differ in colour, layout, and detail. Take this as a reference for how _this_ renderer works, not as an authoritative spec.
 
 ---
 
-## 1. Non-negotiable principles
+## 1. Guiding principles
+
+These are the design choices that shaped this rendering. Other implementations may reasonably differ.
 
 1. **Recursion-first.** The VSM is one structure repeated at every scale, not a 5-box hierarchy. Every level renders identically; navigating between levels is the core interaction.
-2. **Never omit System 3\*.** Systems are **1, 2, 3, 3\*, 4, 5**. A diagram without 3\* is incorrect.
-3. **Pixel-faithful shapes.** Use the exact shapes, sides, and colours specified below. Do not invent new visual elements.
+2. **Include System 3\*.** Systems are **1, 2, 3, 3\*, 4, 5**. Leaving out 3\* loses the audit/verification channel, which matters to the model's integrity.
+3. **Consistent shapes.** This renderer uses the specific shapes and colours documented below. You're free to adapt them in a fork.
 4. **Not an org chart.** Recursion levels are containment (viable systems inside viable systems), not command hierarchy.
 5. **Distinguish S1 from support.** Operational units (S1) and support functions (S2–S5) are categorically different.
 
@@ -34,7 +36,7 @@ This document is the authoritative, **implementation-independent** specification
 
 ## 3. Visual element catalog
 
-Draw each element exactly as specified. **Sides matter:** S3\* is always LEFT, S2 is always RIGHT.
+This renderer draws each element as specified below. **Sides matter for readability:** S3\* is always LEFT, S2 is always RIGHT — swapping them produces a visually confusing diagram.
 
 ### 3.1 Metasystem nodes (one per level)
 
