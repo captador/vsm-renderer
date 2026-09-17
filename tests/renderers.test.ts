@@ -52,8 +52,10 @@ vi.mock('konva', () => {
     destroyChildren = vi.fn();
 
     on(event: string, cb: Function) {
-      const existing = this.handlers.get(event) || [];
-      this.handlers.set(event, [...existing, cb]);
+      for (const e of event.split(' ')) {
+        const existing = this.handlers.get(e) || [];
+        this.handlers.set(e, [...existing, cb]);
+      }
     }
 
     fire(event: string, arg?: object) {

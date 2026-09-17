@@ -63,8 +63,8 @@ function bar(
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
   });
 
-  g.on('click', () => emit({ type: `click:${key}`, id } as VsmEvent));
-  g.on('dblclick', (e) => {
+  g.on('click tap', () => emit({ type: `click:${key}`, id } as VsmEvent));
+  g.on('dblclick dbltap', (e) => {
     e.cancelBubble = true;
     emit({ type: `dblclick:${key}`, id } as VsmEvent);
   });
@@ -181,8 +181,8 @@ export function renderMetasystemLayer(
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
   });
-  s3starG.on('click', () => emit({ type: 'click:s3star', id: system.metasystem.s3star.id }));
-  s3starG.on('dblclick', (e) => {
+  s3starG.on('click tap', () => emit({ type: 'click:s3star', id: system.metasystem.s3star.id }));
+  s3starG.on('dblclick dbltap', (e) => {
     e.cancelBubble = true;
     emit({ type: 'dblclick:s3star', id: system.metasystem.s3star.id });
   });
@@ -228,8 +228,8 @@ export function renderMetasystemLayer(
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
   });
-  s2G.on('click', () => emit({ type: 'click:s2', id: system.metasystem.s2.id }));
-  s2G.on('dblclick', (e) => {
+  s2G.on('click tap', () => emit({ type: 'click:s2', id: system.metasystem.s2.id }));
+  s2G.on('dblclick dbltap', (e) => {
     e.cancelBubble = true;
     emit({ type: 'dblclick:s2', id: system.metasystem.s2.id });
   });

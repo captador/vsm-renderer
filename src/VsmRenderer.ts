@@ -727,13 +727,13 @@ export class VsmRenderer {
     });
 
     // Click on empty canvas
-    stage.on('click', (e) => {
+    stage.on('click tap', (e) => {
       if (e.target !== stage) return;
       this.emitEvent({ type: 'click:background' });
     });
 
-    // Double-click on empty canvas: emit event, then drill up or reset view
-    stage.on('dblclick', (e) => {
+    // Double-click/double-tap on empty canvas: emit event, then drill up or reset view
+    stage.on('dblclick dbltap', (e) => {
       if (e.target !== stage) return;
       this.emitEvent({ type: 'dblclick:background' });
       if (this._path.length > 0) {
