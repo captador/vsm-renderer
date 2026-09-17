@@ -726,15 +726,13 @@ export class VsmRenderer {
       stage.container().style.cursor = 'grab';
     });
 
-    // Click on empty canvas
-    stage.on('click tap', (e) => {
-      if (e.target !== stage) return;
+    // Click on empty canvas (shape handlers set cancelBubble, so this only fires on background)
+    stage.on('click tap', (_e) => {
       this.emitEvent({ type: 'click:background' });
     });
 
     // Double-click/double-tap on empty canvas: emit event, then drill up or reset view
-    stage.on('dblclick dbltap', (e) => {
-      if (e.target !== stage) return;
+    stage.on('dblclick dbltap', (_e) => {
       this.emitEvent({ type: 'dblclick:background' });
       if (this._path.length > 0) {
         this.drillUp();
