@@ -110,9 +110,9 @@ export function renderUnitsLayer(
       })
     );
 
-    unitGroup.on('click', createUnitClickHandler(emit, i, unit));
+    unitGroup.on('click tap', createUnitClickHandler(emit, i, unit));
 
-    unitGroup.on('dblclick', (e) => {
+    unitGroup.on('dblclick dbltap', (e) => {
       e.cancelBubble = true;
       emit({ type: 'dblclick:s1', index: i, unit });
       if (unit.children) {

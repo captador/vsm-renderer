@@ -30,7 +30,7 @@ const mockStage = {
   draggable: vi.fn(),
   add: vi.fn(),
   on: vi.fn((event: string, handler: Function) => {
-    mockStageHandlers[event] = handler;
+    for (const e of event.split(' ')) mockStageHandlers[e] = handler;
   }),
   batchDraw: vi.fn(),
   scale: vi.fn(),
@@ -76,8 +76,10 @@ vi.mock('konva', () => {
     destroyChildren = vi.fn();
 
     on = vi.fn((event: string, cb: Function) => {
-      const existing = this.handlers.get(event) || [];
-      this.handlers.set(event, [...existing, cb]);
+      for (const e of event.split(' ')) {
+        const existing = this.handlers.get(e) || [];
+        this.handlers.set(e, [...existing, cb]);
+      }
     });
 
     fire(event: string, arg?: object) {
@@ -232,7 +234,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Restore on() implementation since clearAllMocks resets it
   mockStage.on.mockImplementation((event: string, handler: Function) => {
-    mockStageHandlers[event] = handler;
+    for (const e of event.split(' ')) mockStageHandlers[e] = handler;
   });
   mockStage.scaleX.mockReturnValue(1);
   mockStage.getPointerPosition.mockReturnValue({ x: 100, y: 100 });

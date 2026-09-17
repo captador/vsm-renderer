@@ -74,8 +74,8 @@ export function renderEnvironmentLayer(
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
   });
-  futureBlob.on('click', handleFutureEnvClick(emit, system.futureEnvironment.id));
-  futureBlob.on('dblclick', (e) => {
+  futureBlob.on('click tap', handleFutureEnvClick(emit, system.futureEnvironment.id));
+  futureBlob.on('dblclick dbltap', (e) => {
     e.cancelBubble = true;
     emit({ type: 'dblclick:futureEnv', id: system.futureEnvironment.id });
   });
@@ -129,8 +129,8 @@ export function renderEnvironmentLayer(
       const stage = layer.getStage();
       if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
     });
-    envBlobGroup.on('click', createEnvClickHandler(emit, i, envBlobData));
-    envBlobGroup.on('dblclick', (e) => {
+    envBlobGroup.on('click tap', createEnvClickHandler(emit, i, envBlobData));
+    envBlobGroup.on('dblclick dbltap', (e) => {
       e.cancelBubble = true;
       emit({ type: 'dblclick:env', index: i, env: envBlobData });
     });
