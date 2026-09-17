@@ -49,11 +49,16 @@
       .canvas-container {
         flex: 1;
         display: flex;
-        justify-content: center;
-        align-items: center;
+        justify-content: safe center;
+        align-items: safe center;
         background: #fff;
         overflow: auto;
         padding: 20px;
+      }
+
+      .canvas-container > div:fullscreen,
+      .canvas-container > div::backdrop {
+        background: #fff;
       }
 
       .sidebar {
