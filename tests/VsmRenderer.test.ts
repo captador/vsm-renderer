@@ -794,6 +794,110 @@ describe('VsmRenderer', () => {
 
   // --------------------------------------------------------------------------
 
+  describe('Konva group tap events → onEvent (touch)', () => {
+    it('tapping the S5 bar emits click:s5', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.s5].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:s5' }));
+    });
+
+    it('tapping the S4 bar emits click:s4', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.s4].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:s4' }));
+    });
+
+    it('tapping the S3 bar emits click:s3', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.s3].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:s3' }));
+    });
+
+    it('tapping the S3* triangle emits click:s3star', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.s3star].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith({ type: 'click:s3star', id: 'root-s3star' });
+    });
+
+    it('tapping the S2 triangle emits click:s2', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.s2].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith({ type: 'click:s2', id: 'root-s2' });
+    });
+
+    it('tapping the future environment emits click:futureEnv', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.futureBlob].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith({ type: 'click:futureEnv', id: 'root-future' });
+    });
+
+    it('tapping a sub-environment emits click:env', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.envBlobGroup0].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:env' }));
+    });
+
+    it('tapping the first S1 unit emits click:s1 with index 0', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.unit0].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:s1', index: 0 }));
+    });
+
+    it('tapping the second S1 unit emits click:s1 with index 1', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      mockGroupRegistry.groups[G.unit1].fire('tap');
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:s1', index: 1 }));
+    });
+
+    it('double-tapping a holon unit emits drillDown', () => {
+      const onEvent = vi.fn();
+      const childSystem = makeSystem('child', 1);
+      const rootSystem: VsmSystem = {
+        ...makeSystem('root', 1),
+        s1: [{ ...makeUnit('u0'), children: childSystem }],
+      };
+
+      makeRenderer({ system: rootSystem, onEvent });
+      onEvent.mockClear();
+
+      const unitGroup = mockGroupRegistry.groups[23];
+      unitGroup.fire('dbltap', { cancelBubble: false });
+
+      expect(onEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'drillDown', index: 0 })
+      );
+    });
+  });
+
+  // --------------------------------------------------------------------------
+
   describe('Konva stage interaction handlers', () => {
     // These tests invoke the callback functions registered on the Konva stage
     // via stage.on(), exercising setupInteractions() branches.
@@ -861,23 +965,69 @@ describe('VsmRenderer', () => {
       expect(() => dragEndHandler()).not.toThrow();
     });
 
+    it('clicking the stage background emits click:background', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      const clickHandler = mockStageHandlers['click'];
+      expect(clickHandler).toBeDefined();
+      clickHandler({ target: mockStageInstance });
+      expect(onEvent).toHaveBeenCalledWith({ type: 'click:background' });
+    });
+
+    it('clicking a non-stage element does not emit click:background', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      const clickHandler = mockStageHandlers['click'];
+      clickHandler({ target: {} });
+      expect(onEvent).not.toHaveBeenCalledWith({ type: 'click:background' });
+    });
+
+    it('tapping the stage background emits click:background', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      const tapHandler = mockStageHandlers['tap'];
+      expect(tapHandler).toBeDefined();
+      tapHandler({ target: mockStageInstance });
+      expect(onEvent).toHaveBeenCalledWith({ type: 'click:background' });
+    });
+
+    it('tapping a non-stage element does not emit click:background', () => {
+      const onEvent = vi.fn();
+      makeRenderer({ onEvent });
+      onEvent.mockClear();
+
+      const tapHandler = mockStageHandlers['tap'];
+      tapHandler({ target: {} });
+      expect(onEvent).not.toHaveBeenCalledWith({ type: 'click:background' });
+    });
+
     it('double-clicking the stage background resets the view at root level', () => {
       makeRenderer();
       const dblclickHandler = mockStageHandlers['dblclick'];
       expect(dblclickHandler).toBeDefined();
 
-      // e.target === the actual Stage instance → resets view (path is empty at root)
-      const fakeEvent = { target: mockStageInstance };
-      expect(() => dblclickHandler(fakeEvent)).not.toThrow();
+      expect(() => dblclickHandler({ target: mockStageInstance })).not.toThrow();
     });
 
     it('double-clicking a non-stage element is ignored', () => {
       makeRenderer();
       const dblclickHandler = mockStageHandlers['dblclick'];
 
-      // e.target !== stage → returns early without action
-      const fakeEvent = { target: {} };
-      expect(() => dblclickHandler(fakeEvent)).not.toThrow();
+      expect(() => dblclickHandler({ target: {} })).not.toThrow();
+    });
+
+    it('double-tapping the stage background resets the view at root level', () => {
+      makeRenderer();
+      const dbltapHandler = mockStageHandlers['dbltap'];
+      expect(dbltapHandler).toBeDefined();
+
+      expect(() => dbltapHandler({ target: mockStageInstance })).not.toThrow();
     });
 
     it('double-clicking stage background when at depth drills up', () => {
@@ -897,11 +1047,27 @@ describe('VsmRenderer', () => {
       onEvent.mockClear();
       unitGroup.fire('dblclick', { cancelBubble: false });
 
-      // Now path has one entry — dblclick on stage should drillUp
       onEvent.mockClear();
-      const dblclickHandler = mockStageHandlers['dblclick'];
-      dblclickHandler({ target: mockStageInstance });
+      mockStageHandlers['dblclick']({ target: mockStageInstance });
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'drillUp' }));
+    });
 
+    it('double-tapping stage background when at depth drills up', () => {
+      const onEvent = vi.fn();
+      const childSystem = makeSystem('child', 1);
+      const rootSystem: VsmSystem = {
+        ...makeSystem('root', 1),
+        s1: [{ ...makeUnit('u0'), children: childSystem }],
+      };
+
+      makeRenderer({ system: rootSystem, onEvent });
+
+      const unitGroup = mockGroupRegistry.groups[23];
+      onEvent.mockClear();
+      unitGroup.fire('dbltap', { cancelBubble: false });
+
+      onEvent.mockClear();
+      mockStageHandlers['dbltap']({ target: mockStageInstance });
       expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'drillUp' }));
     });
   });

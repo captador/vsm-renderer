@@ -167,6 +167,30 @@ describe('renderEnvironmentLayer()', () => {
     expect(emit).toHaveBeenCalledWith({ type: 'click:futureEnv', id: 'env-test-future' });
   });
 
+  it('tapping the future environment group emits click:futureEnv', () => {
+    const emit = vi.fn();
+    renderEnvironmentLayer(mockLayer(), makeSystem('env-test-tap'), emit);
+
+    registry.groups[0].fire('tap');
+    expect(emit).toHaveBeenCalledWith({ type: 'click:futureEnv', id: 'env-test-tap-future' });
+  });
+
+  it('double-clicking the future environment group emits dblclick:futureEnv', () => {
+    const emit = vi.fn();
+    renderEnvironmentLayer(mockLayer(), makeSystem('env-dbl'), emit);
+
+    registry.groups[0].fire('dblclick', { cancelBubble: false });
+    expect(emit).toHaveBeenCalledWith({ type: 'dblclick:futureEnv', id: 'env-dbl-future' });
+  });
+
+  it('double-tapping the future environment group emits dblclick:futureEnv', () => {
+    const emit = vi.fn();
+    renderEnvironmentLayer(mockLayer(), makeSystem('env-dbltap'), emit);
+
+    registry.groups[0].fire('dbltap', { cancelBubble: false });
+    expect(emit).toHaveBeenCalledWith({ type: 'dblclick:futureEnv', id: 'env-dbltap-future' });
+  });
+
   it('hovering over the future environment group triggers mouseenter without throwing', () => {
     renderEnvironmentLayer(mockLayer(), makeSystem('env-hover'), vi.fn());
     expect(() => registry.groups[0].fire('mouseenter')).not.toThrow();
@@ -186,12 +210,44 @@ describe('renderEnvironmentLayer()', () => {
     expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:env', index: 0 }));
   });
 
+  it('tapping a sub-environment blob emits click:env with index 0', () => {
+    const emit = vi.fn();
+    renderEnvironmentLayer(mockLayer(), makeSystem('env-sub-tap'), emit);
+
+    registry.groups[2].fire('tap');
+    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:env', index: 0 }));
+  });
+
   it('clicking the second sub-environment blob emits click:env with index 1', () => {
     const emit = vi.fn();
     renderEnvironmentLayer(mockLayer(), makeSystem('env-sub2', 2), emit);
 
     registry.groups[3].fire('click');
     expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:env', index: 1 }));
+  });
+
+  it('tapping the second sub-environment blob emits click:env with index 1', () => {
+    const emit = vi.fn();
+    renderEnvironmentLayer(mockLayer(), makeSystem('env-sub2-tap', 2), emit);
+
+    registry.groups[3].fire('tap');
+    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'click:env', index: 1 }));
+  });
+
+  it('double-clicking a sub-environment blob emits dblclick:env', () => {
+    const emit = vi.fn();
+    renderEnvironmentLayer(mockLayer(), makeSystem('env-sub-dbl'), emit);
+
+    registry.groups[2].fire('dblclick', { cancelBubble: false });
+    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dblclick:env', index: 0 }));
+  });
+
+  it('double-tapping a sub-environment blob emits dblclick:env', () => {
+    const emit = vi.fn();
+    renderEnvironmentLayer(mockLayer(), makeSystem('env-sub-dbltap'), emit);
+
+    registry.groups[2].fire('dbltap', { cancelBubble: false });
+    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dblclick:env', index: 0 }));
   });
 
   it('hovering over a sub-environment blob triggers mouseenter without throwing', () => {
@@ -258,12 +314,44 @@ describe('renderMetasystemLayer()', () => {
     expect(emit).toHaveBeenCalledWith({ type: 'click:s5', id: 'meta-s5' });
   });
 
+  it('tapping System 5 emits click:s5', () => {
+    const emit = vi.fn();
+    renderMetasystemLayer(mockLayer(), makeSystem('meta-tap'), emit);
+
+    registry.groups[0].fire('tap');
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s5', id: 'meta-tap-s5' });
+  });
+
+  it('double-clicking System 5 emits dblclick:s5', () => {
+    const emit = vi.fn();
+    renderMetasystemLayer(mockLayer(), makeSystem('meta-dbl'), emit);
+
+    registry.groups[0].fire('dblclick', { cancelBubble: false });
+    expect(emit).toHaveBeenCalledWith({ type: 'dblclick:s5', id: 'meta-dbl-s5' });
+  });
+
+  it('double-tapping System 5 emits dblclick:s5', () => {
+    const emit = vi.fn();
+    renderMetasystemLayer(mockLayer(), makeSystem('meta-dbltap'), emit);
+
+    registry.groups[0].fire('dbltap', { cancelBubble: false });
+    expect(emit).toHaveBeenCalledWith({ type: 'dblclick:s5', id: 'meta-dbltap-s5' });
+  });
+
   it('clicking System 4 emits click:s4', () => {
     const emit = vi.fn();
     renderMetasystemLayer(mockLayer(), makeSystem('meta'), emit);
 
     registry.groups[1].fire('click');
     expect(emit).toHaveBeenCalledWith({ type: 'click:s4', id: 'meta-s4' });
+  });
+
+  it('tapping System 4 emits click:s4', () => {
+    const emit = vi.fn();
+    renderMetasystemLayer(mockLayer(), makeSystem('meta-tap'), emit);
+
+    registry.groups[1].fire('tap');
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s4', id: 'meta-tap-s4' });
   });
 
   it('clicking System 3 emits click:s3', () => {
@@ -274,6 +362,14 @@ describe('renderMetasystemLayer()', () => {
     expect(emit).toHaveBeenCalledWith({ type: 'click:s3', id: 'meta-s3' });
   });
 
+  it('tapping System 3 emits click:s3', () => {
+    const emit = vi.fn();
+    renderMetasystemLayer(mockLayer(), makeSystem('meta-tap'), emit);
+
+    registry.groups[2].fire('tap');
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s3', id: 'meta-tap-s3' });
+  });
+
   it('clicking the S3* (audit) triangle emits click:s3star', () => {
     const emit = vi.fn();
     renderMetasystemLayer(mockLayer(), makeSystem('meta'), emit);
@@ -282,12 +378,28 @@ describe('renderMetasystemLayer()', () => {
     expect(emit).toHaveBeenCalledWith({ type: 'click:s3star', id: 'meta-s3star' });
   });
 
+  it('tapping the S3* (audit) triangle emits click:s3star', () => {
+    const emit = vi.fn();
+    renderMetasystemLayer(mockLayer(), makeSystem('meta-tap'), emit);
+
+    registry.groups[3].fire('tap');
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s3star', id: 'meta-tap-s3star' });
+  });
+
   it('clicking the S2 (coordination) triangle emits click:s2', () => {
     const emit = vi.fn();
     renderMetasystemLayer(mockLayer(), makeSystem('meta'), emit);
 
     registry.groups[4].fire('click');
     expect(emit).toHaveBeenCalledWith({ type: 'click:s2', id: 'meta-s2' });
+  });
+
+  it('tapping the S2 (coordination) triangle emits click:s2', () => {
+    const emit = vi.fn();
+    renderMetasystemLayer(mockLayer(), makeSystem('meta-tap'), emit);
+
+    registry.groups[4].fire('tap');
+    expect(emit).toHaveBeenCalledWith({ type: 'click:s2', id: 'meta-tap-s2' });
   });
 
   it('hovering over metasystem bars triggers mouseenter without throwing', () => {
@@ -358,6 +470,19 @@ describe('renderUnitsLayer()', () => {
     );
   });
 
+  it('tapping the first S1 unit emits click:s1 with index 0 and the unit data', () => {
+    const emit = vi.fn();
+    const system = makeSystem('units-tap');
+
+    renderUnitsLayer(mockLayer(), system, emit);
+
+    registry.groups[0].fire('tap');
+
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'click:s1', index: 0, unit: system.s1[0] })
+    );
+  });
+
   it('clicking the second S1 unit emits click:s1 with index 1 and the unit data', () => {
     const emit = vi.fn();
     const system = makeSystem('units2', 2);
@@ -365,6 +490,19 @@ describe('renderUnitsLayer()', () => {
     renderUnitsLayer(mockLayer(), system, emit);
 
     registry.groups[1].fire('click');
+
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'click:s1', index: 1, unit: system.s1[1] })
+    );
+  });
+
+  it('tapping the second S1 unit emits click:s1 with index 1 and the unit data', () => {
+    const emit = vi.fn();
+    const system = makeSystem('units2-tap', 2);
+
+    renderUnitsLayer(mockLayer(), system, emit);
+
+    registry.groups[1].fire('tap');
 
     expect(emit).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'click:s1', index: 1, unit: system.s1[1] })
@@ -387,6 +525,22 @@ describe('renderUnitsLayer()', () => {
     expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'drillDown', index: 0 }));
   });
 
+  it('double-tapping a holon (unit with children) emits drillDown', () => {
+    const emit = vi.fn();
+    const childSystem = makeSystem('child-tap', 1);
+    const system: VsmSystem = {
+      ...makeSystem('holon-tap', 1),
+      s1: [{ ...makeUnit('h0-tap'), children: childSystem }],
+    };
+
+    renderUnitsLayer(mockLayer(), system, emit);
+
+    const fakeEvent = { cancelBubble: false };
+    registry.groups[0].fire('dbltap', fakeEvent);
+
+    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'drillDown', index: 0 }));
+  });
+
   it('registers dblclick on a leaf (non-holon) unit for dblclick:s1', () => {
     const system = makeSystem('leaf', 1);
     const emit = vi.fn();
@@ -398,6 +552,19 @@ describe('renderUnitsLayer()', () => {
 
     expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dblclick:s1', index: 0 }));
     // drillDown must NOT fire for a leaf unit
+    expect(emit).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'drillDown' }));
+  });
+
+  it('double-tapping a leaf (non-holon) unit emits dblclick:s1, not drillDown', () => {
+    const system = makeSystem('leaf-tap', 1);
+    const emit = vi.fn();
+
+    renderUnitsLayer(mockLayer(), system, emit);
+
+    const fakeEvent = { cancelBubble: false };
+    registry.groups[0].fire('dbltap', fakeEvent);
+
+    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dblclick:s1', index: 0 }));
     expect(emit).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'drillDown' }));
   });
 
