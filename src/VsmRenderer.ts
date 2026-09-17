@@ -727,14 +727,16 @@ export class VsmRenderer {
     });
 
     // Click on empty canvas
+    // For mouse: guard against clicks that hit a shape but bubble up.
+    // For touch: shape handlers set cancelBubble, so no guard needed.
     stage.on('click tap', (e) => {
-      if (e.target !== stage) return;
+      if (e.evt instanceof MouseEvent && e.target !== stage) return;
       this.emitEvent({ type: 'click:background' });
     });
 
     // Double-click/double-tap on empty canvas: emit event, then drill up or reset view
     stage.on('dblclick dbltap', (e) => {
-      if (e.target !== stage) return;
+      if (e.evt instanceof MouseEvent && e.target !== stage) return;
       this.emitEvent({ type: 'dblclick:background' });
       if (this._path.length > 0) {
         this.drillUp();
