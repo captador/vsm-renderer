@@ -143,6 +143,7 @@ const App: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<VsmRenderer | null>(null);
   const [navStack, setNavStack] = useState<VsmSystem[]>([initialSystem]);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [channels, setChannels] = useState<ChannelVisibility>(ALL_CHANNELS_ON);
   const [selectedElement, setSelectedElement] = useState<{
     type: string;
@@ -411,13 +412,15 @@ const App: React.FC = () => {
     <>
       <div className="header">
         <h1>VSM Renderer Demo</h1>
-        <div>Konva Canvas Implementation</div>
+        <button className="sidebar-toggle" onClick={() => setSidebarOpen((v) => !v)}>
+          {sidebarOpen ? '▶' : '◀'}
+        </button>
       </div>
       <div className="main">
         <div className="canvas-container">
           <div ref={canvasRef} />
         </div>
-        <aside className="sidebar">
+        <aside className={`sidebar${sidebarOpen ? '' : ' collapsed'}`}>
           <div className="section">
             <h3>Navigation</h3>
             <div className="breadcrumb">{renderBreadcrumb()}</div>
