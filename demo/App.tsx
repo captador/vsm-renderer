@@ -275,7 +275,7 @@ const App: React.FC = () => {
     // nav stack entry's S1 unit name). At root depth there is no parent unit.
     if (navStack.length > 1) {
       const parentSystem = navStack[navStack.length - 2];
-      const parentUnit = parentSystem.s1.find((u) => u.children?.id === currentSystem.id);
+      const parentUnit = parentSystem.s1.find((u) => u.children === currentSystem);
       rendererRef.current?.setLevelLabel(parentUnit?.name ?? currentSystem.name);
     } else {
       rendererRef.current?.setLevelLabel(null);
