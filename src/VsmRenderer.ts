@@ -42,7 +42,7 @@ import { renderTopLayer } from './renderers/TopLayerRenderer';
 const ICON_ZOOM_IN = `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="6.5"/><line x1="8.5" y1="5.5" x2="8.5" y2="11.5"/><line x1="5.5" y1="8.5" x2="11.5" y2="8.5"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>`;
 const ICON_ZOOM_OUT = `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="6.5"/><line x1="5.5" y1="8.5" x2="11.5" y2="8.5"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>`;
 const ICON_FULLSCREEN = `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 2,2 7,2"/><polyline points="13,2 18,2 18,7"/><polyline points="2,13 2,18 7,18"/><polyline points="18,13 18,18 13,18"/></svg>`;
-const ICON_FULLSCREEN_EXIT = `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="7,2 7,7 2,7"/><polyline points="13,7 18,7 18,2"/><polyline points="2,13 7,13 7,18"/><polyline points="18,13 13,13 13,18"/></svg>`;
+const ICON_FULLSCREEN_EXIT = `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="7,2 7,7 2,7"/><polyline points="13,2 13,7 18,7"/><polyline points="2,13 7,13 7,18"/><polyline points="18,13 13,13 13,18"/></svg>`;
 
 /**
  * Konva-based renderer for Viable System Model (VSM) diagrams.
