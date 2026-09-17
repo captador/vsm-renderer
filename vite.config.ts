@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
     return {
       plugins: [react()],
       root: 'demo',
+      base: '/vsm_render/',
       build: {
         outDir: '../dist-demo',
       },
