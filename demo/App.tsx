@@ -142,6 +142,7 @@ const INFO_COPY: Record<string, { title: string; description: string }> = {
 const App: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<VsmRenderer | null>(null);
+  const onEventRef = useRef<(event: VsmEvent) => void>(null!);
   const [navStack, setNavStack] = useState<VsmSystem[]>([initialSystem]);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [channels, setChannels] = useState<ChannelVisibility>(ALL_CHANNELS_ON);
@@ -243,14 +244,20 @@ const App: React.FC = () => {
     [currentSystem, navStack, hasParent, metasystem]
   );
 
-  // Initialize renderer
+  // Keep the ref pointing at the latest handler so the renderer never needs
+  // to be recreated just because navStack (and therefore handleVsmEvent) changed.
+  onEventRef.current = handleVsmEvent;
+
+  // Initialize renderer once on mount. The stable onEvent wrapper reads the
+  // current handleVsmEvent via ref, preserving the renderer's internal _path
+  // across navigations (required for dblclick/dbltap-to-drill-up to work).
   useEffect(() => {
     if (!canvasRef.current) return;
     const renderer = new VsmRenderer({
       container: canvasRef.current,
-      system: currentSystem,
-      channels,
-      onEvent: handleVsmEvent,
+      system: initialSystem,
+      channels: ALL_CHANNELS_ON,
+      onEvent: (e) => onEventRef.current(e),
       width: 900,
       height: 1100,
     });
@@ -259,7 +266,7 @@ const App: React.FC = () => {
       renderer.destroy();
       rendererRef.current = null;
     };
-  }, [handleVsmEvent]);
+  }, []);
 
   // Update renderer when system or navigation depth changes
   useEffect(() => {

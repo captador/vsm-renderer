@@ -726,8 +726,10 @@ export class VsmRenderer {
       stage.container().style.cursor = 'grab';
     });
 
-    // Click on empty canvas (shape handlers set cancelBubble, so this only fires on background)
-    stage.on('click tap', (_e) => {
+    // Click on empty canvas — shape click/tap handlers don't set cancelBubble,
+    // so guard by target to avoid firing when a shape was hit.
+    stage.on('click tap', (e) => {
+      if (e.target !== stage) return;
       this.emitEvent({ type: 'click:background' });
     });
 
