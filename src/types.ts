@@ -54,11 +54,15 @@ export interface Metasystem {
 
 /**
  * A sub-environment blob — the local context of a single S1 unit.
- * The `environments` array in `VsmSystem` must be parallel to `s1[]`.
+ *
+ * The blob is **mapped** only when `s1Id` references an existing S1 unit id;
+ * it is then rendered on that unit's row with eye-loops and channels to it.
+ * Blobs without a valid `s1Id` are not-mapped complexity slices: rendered
+ * below all S1 rows with a distinct "?" style and no S1 connections.
  */
 export interface EnvBlob {
   id: string;
-  /** ID of the S1 unit this environment belongs to. Optional for not-mapped slices. */
+  /** ID of the S1 unit this environment belongs to. Required for a mapped blob; omit/empty for not-mapped slices. */
   s1Id?: string;
   name?: string;
 }
@@ -102,13 +106,12 @@ export interface VsmSystem {
   s1: S1Unit[];
   metasystem: Metasystem;
   /**
-   * Environment blobs, in the same order as `s1[]`. The array may contain
-   * *more* entries than `s1` — extra blobs (at indices ≥ `s1.length`) are
-   * rendered as **not-mapped complexity slices**: they appear with a distinct
-   * style and no eye-loops, signalling that those S1 units have not yet been
-   * defined.
-   *
-   * Minimum length: `s1.length` (one blob per mapped unit).
+   * Environment blobs. Mapping to S1 units is explicit via each blob's
+   * `s1Id` — a blob renders on its S1 unit's row with eye-loops/channels only
+   * when mapped. The array may contain blobs without a valid `s1Id`; those are
+   * rendered below all S1 rows as **not-mapped complexity slices** (distinct
+   * style, "?" marker, no eye-loops), signalling environments whose S1
+   * mapping has not been done yet.
    */
   environments: EnvBlob[];
   futureEnvironment: FutureEnvironment;

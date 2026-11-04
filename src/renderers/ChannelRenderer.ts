@@ -20,6 +20,7 @@ import {
   ENV_X,
   S1_MGMT_DY,
   rowY,
+  envRows,
 } from '../layout';
 
 export function renderChannelLayer(
@@ -29,10 +30,16 @@ export function renderChannelLayer(
 ): Record<ChannelId, Konva.Group> {
   const n = system.s1.length;
   const envLen = system.environments.length;
-  // Only connect channels to s1 units that have a paired environment blob.
-  const mappedCount = Math.min(n, envLen);
+  // Explicit mapping via EnvBlob.s1Id: channels touch only S1 units that have
+  // a mapped environment blob. Adding env blobs without mapping them must
+  // not draw any S1↔env channels.
+  const mappedRows = system.s1
+    .map((u, i) => (system.environments.some((e) => e.s1Id === u.id) ? i : -1))
+    .filter((i) => i >= 0);
+  const mappedCount = mappedRows.length;
+  const rowOfEnv = envRows(system);
   const lastY = rowY(Math.max(n, 1) - 1);
-  const lastMappedY = rowY(Math.max(mappedCount, 1) - 1);
+  const lastMappedY = rowY(mappedCount > 0 ? mappedRows[mappedCount - 1] : 0);
   const lastMgmtY = lastMappedY - S1_MGMT_DY;
   const groups = {} as Record<ChannelId, Konva.Group>;
 
@@ -44,10 +51,10 @@ export function renderChannelLayer(
 
   // -------------------------------------------------------------------------
   // Channel a — Environmental overlaps: amber lens shapes between sub-env blobs
-  // Spans all adjacent env blobs, including not-mapped ones.
+  // Spans all adjacent env blobs (by mapped row), including not-mapped ones.
   // -------------------------------------------------------------------------
   for (let i = 0; i < envLen - 1; i++) {
-    const ym = (rowY(i) + rowY(i + 1)) / 2;
+    const ym = (rowY(rowOfEnv[i]) + rowY(rowOfEnv[i + 1])) / 2;
     groups.a.add(
       new Konva.Ellipse({
         x: ENV_X,
@@ -70,7 +77,7 @@ export function renderChannelLayer(
       strokeWidth: 3.6,
     })
   );
-  for (let i = 0; i < mappedCount; i++) {
+  for (const i of mappedRows) {
     const y = rowY(i);
     groups.b.add(
       new Konva.Line({
@@ -84,10 +91,12 @@ export function renderChannelLayer(
   // -------------------------------------------------------------------------
   // Channel c — Operational dependencies: wavy path between adjacent op circles
   // -------------------------------------------------------------------------
-  for (let i = 0; i < mappedCount - 1; i++) {
+  for (let k = 0; k < mappedCount - 1; k++) {
+    const i = mappedRows[k];
+    const j = mappedRows[k + 1];
     groups.c.add(
       new Konva.Path({
-        data: wave(CIRCLE_X, rowY(i) + CIRCLE_R, rowY(i + 1) - CIRCLE_R, 4),
+        data: wave(CIRCLE_X, rowY(i) + CIRCLE_R, rowY(j) - CIRCLE_R, 4),
         stroke: COLORS.s2, // amber/yellow squiggle per vsm.html
         strokeWidth: 2.6,
         fill: null as unknown as string,
@@ -105,7 +114,7 @@ export function renderChannelLayer(
       strokeWidth: 4.5,
     })
   );
-  for (let i = 0; i < mappedCount; i++) {
+  for (const i of mappedRows) {
     const my = rowY(i) - S1_MGMT_DY;
     groups.d.add(
       new Konva.Line({
@@ -137,7 +146,7 @@ export function renderChannelLayer(
       strokeWidth: 4.5,
     })
   );
-  for (let i = 0; i < mappedCount; i++) {
+  for (const i of mappedRows) {
     const my = rowY(i) - S1_MGMT_DY;
     // rung to management square
     groups.f.add(

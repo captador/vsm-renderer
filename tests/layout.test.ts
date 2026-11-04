@@ -31,6 +31,8 @@ import {
   MIN_ZOOM,
   rowY,
   canvasHeight,
+  envRows,
+  totalRows,
 } from '../src/layout';
 
 describe('Layout Constants', () => {
@@ -181,6 +183,61 @@ describe('Layout Functions', () => {
 
       expect(height2).toBeGreaterThan(height1);
       expect(height3).toBeGreaterThan(height2);
+    });
+  });
+
+  describe('envRows() / totalRows() — explicit s1Id mapping', () => {
+    const s1 = [{ id: 's1-a' }, { id: 's1-b' }, { id: 's1-c' }];
+
+    it('maps each env blob to the row of its s1Id unit, regardless of array order', () => {
+      const rows = envRows({
+        s1,
+        environments: [
+          { id: 'e1', s1Id: 's1-c' },
+          { id: 'e2', s1Id: 's1-a' },
+        ],
+      });
+      expect(rows).toEqual([2, 0]);
+    });
+
+    it('stacks blobs without a valid s1Id below all S1 rows', () => {
+      const rows = envRows({
+        s1,
+        environments: [
+          { id: 'e1', s1Id: 's1-b' },
+          { id: 'e2' }, // not mapped yet
+          { id: 'e3', s1Id: 's1-ghost' }, // dangling ref — also unmapped
+        ],
+      });
+      expect(rows).toEqual([1, 3, 4]);
+      expect(
+        totalRows({
+          s1,
+          environments: [{ id: 'e1', s1Id: 's1-b' }, { id: 'e2' }, { id: 'e3', s1Id: 's1-ghost' }],
+        })
+      ).toBe(5);
+    });
+
+    it('gives no S1 row to any blob when none are mapped (bug: channels to unmapped envs)', () => {
+      const system = {
+        s1,
+        environments: [{ id: 'e1' }, { id: 'e2' }], // added but not mapped
+      };
+      expect(envRows(system).every((r) => r >= s1.length)).toBe(true);
+      expect(totalRows(system)).toBe(5);
+    });
+
+    it('keeps all-mapped systems at one row per S1 unit', () => {
+      const system = {
+        s1,
+        environments: [
+          { id: 'e1', s1Id: 's1-a' },
+          { id: 'e2', s1Id: 's1-b' },
+          { id: 'e3', s1Id: 's1-c' },
+        ],
+      };
+      expect(envRows(system)).toEqual([0, 1, 2]);
+      expect(totalRows(system)).toBe(3);
     });
   });
 });

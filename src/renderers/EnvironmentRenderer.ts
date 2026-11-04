@@ -7,7 +7,7 @@ import Konva from 'konva';
 import type { VsmSystem, VsmEvent, EnvBlob } from '../types';
 import { COLORS, lightenHex } from '../utils/palette';
 import { blob, envSilhouette } from '../utils/geometry';
-import { ENV_X, rowY } from '../layout';
+import { ENV_X, rowY, envRows, totalRows } from '../layout';
 
 const ENV_BLOB_EX = ENV_X + 40; // right edge of env blob (used for eye-loops)
 const EYE_CX = 462; // left edge of eye-loop (near circle left)
@@ -32,11 +32,13 @@ export function renderEnvironmentLayer(
 ): void {
   const n = system.s1.length;
   const envLen = system.environments.length;
-  // Rows that have both an s1 unit and an env blob — eye-loops connect these.
-  const mappedCount = Math.min(n, envLen);
-  // Total rows to allocate vertical space for (whichever array is longer).
-  const totalRows = Math.max(n, envLen, 1);
-  const lastY = rowY(totalRows - 1);
+  // Explicit mapping via EnvBlob.s1Id: a blob pairs with the S1 unit it
+  // references and takes that unit's row; unmapped blobs stack below all S1
+  // rows as "complexity slices". Positional pairing is NOT used — adding an
+  // env blob without mapping it must not create S1↔env connections.
+  const rowOfEnv = envRows(system);
+  const rowCount = totalRows(system);
+  const lastY = rowY(rowCount - 1);
 
   // --- Outer silhouette (large grey amoeba encompassing everything) ---
   layer.add(
@@ -81,12 +83,13 @@ export function renderEnvironmentLayer(
   });
 
   // --- Sub-environment blobs ---
-  // Indices 0..envLen-1 are rendered; indices >= n are "not-mapped" slices.
+  // Every blob is rendered at the row given by the s1Id mapping; blobs whose
+  // row is >= s1.length are "not-mapped" slices.
   const envGroup = new Konva.Group();
   for (let i = 0; i < envLen; i++) {
-    const y = rowY(i);
+    const y = rowY(rowOfEnv[i]);
     const envBlobData = system.environments[i];
-    const isUnmapped = i >= n;
+    const isUnmapped = rowOfEnv[i] >= n;
 
     const fill = isUnmapped ? COLORS.envBlobUnmapped : COLORS.envBlob;
     const opacity = isUnmapped ? 0.55 : 0.72;
@@ -139,10 +142,11 @@ export function renderEnvironmentLayer(
   }
   layer.add(envGroup);
 
-  // --- Eye-loops: only for rows that have both an s1 unit and an env blob ---
+  // --- Eye-loops: only for env blobs explicitly mapped to an S1 unit ---
   const eyeGroup = new Konva.Group({ opacity: 0.85 });
-  for (let i = 0; i < mappedCount; i++) {
-    const y = rowY(i);
+  for (let i = 0; i < envLen; i++) {
+    if (rowOfEnv[i] >= n) continue; // unmapped slice — no connection to S1
+    const y = rowY(rowOfEnv[i]);
 
     // Upper arc: circle → env blob (input / attenuator)
     eyeGroup.add(
