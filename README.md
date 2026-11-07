@@ -4,7 +4,7 @@ A Konva-based TypeScript library for rendering [Viable System Model](https://en.
 
 ## Demo
 
-You can try it at [github pages](https://github.com/captador/vsm-renderer/deployments/github-pages) of this repo. Also sign up to https://viablesystemmodel.design for persisted storage of your models.
+You can try it at [github pages](https://captador.github.io/vsm-renderer/) of this repo. Also sign up to https://viablesystemmodel.design for persisted storage of your models.
 
 ## Installation
 
