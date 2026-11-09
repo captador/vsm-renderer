@@ -11,7 +11,7 @@ You can try it at [github pages](https://captador.github.io/vsm-renderer/) of th
 ## Installation
 
 ```bash
-npm install @captador/vsm-renderer@0.4.6 konva
+npm install @captador/vsm-renderer@latest konva
 ```
 
 Konva is a peer dependency and must be installed separately.
