@@ -2,6 +2,8 @@
 
 A Konva-based TypeScript library for rendering [Viable System Model](https://en.wikipedia.org/wiki/Viable_system_model) (VSM) diagrams. Implements Beer's VSM notation with full recursion, channel toggling, zoom/pan, and click interaction.
 
+Published as [`@captador/vsm-renderer`](https://github.com/captador/vsm-renderer/pkgs/npm/vsm-renderer) on GitHub Packages.
+
 ## Demo
 
 You can try it at [github pages](https://captador.github.io/vsm-renderer/) of this repo. Also sign up to https://viablesystemmodel.design for persisted storage of your models.
@@ -9,7 +11,7 @@ You can try it at [github pages](https://captador.github.io/vsm-renderer/) of th
 ## Installation
 
 ```bash
-pnpm add vsm-renderer konva
+npm install @captador/vsm-renderer@0.4.6 konva
 ```
 
 Konva is a peer dependency and must be installed separately.
