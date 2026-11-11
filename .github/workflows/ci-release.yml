@@ -50,6 +50,9 @@ jobs:
   # then creates a GitHub Release. The existing publish.yml picks up the release
   # event and publishes the npm package to GitHub Packages.
   #
+  # Skipped when no published-package code changed since the last tag, so
+  # docs/demo/CI-only pushes do not produce an empty release.
+  #
   # Version bump rules (conventional commits):
   #   BREAKING CHANGE or type!:  →  major
   #   feat:                      →  minor
@@ -72,8 +75,23 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check for code changes since last tag
+        id: code-changes
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          # Paths that affect the published npm package.
+          PATHS="src package.json tsconfig.json vite.config.ts pnpm-lock.yaml pnpm-workspace.yaml"
+          if [ -n "$LAST_TAG" ] &&
+             [ -z "$(git diff --name-only "$LAST_TAG" HEAD -- $PATHS)" ]; then
+            echo "No code changes since $LAST_TAG — skipping release."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Determine next version
         id: version
+        if: steps.code-changes.outputs.changed == 'true'
         run: |
           # Commits since the last tag (or all commits if no tags yet).
           # The latest release tag is the source of truth for the current
@@ -111,6 +129,7 @@ jobs:
           echo "tag=v$NEW"        >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
+        if: steps.code-changes.outputs.changed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
