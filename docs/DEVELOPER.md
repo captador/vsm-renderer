@@ -48,6 +48,8 @@ All options are passed as a single object to `new VsmRenderer(options)`.
 | `width`      | `number`                     | no       | `900`           | Canvas width in pixels                                                      |
 | `height`     | `number`                     | no       | `1100`          | Canvas height in pixels                                                     |
 | `levelLabel` | `string`                     | no       | —               | Context label shown above the system name (e.g. the drilled-into unit name) |
+| `theme`      | `'light' \| 'dark'`          | no       | `'light'`       | Diagram color theme; change at runtime with `setTheme()`                    |
+| `autoResize` | `boolean`                    | no       | `false`         | Observe the container with a `ResizeObserver` and auto-call `resize()`      |
 
 The container element will have `position: relative` set on it and will receive three injected children: the Konva `div.konvajs-content` wrapper, the controls overlay `div` (top-right), and the system label overlay `div` (top-left).
 
@@ -117,9 +119,21 @@ Reset zoom to 1× and pan to origin (top-left of canvas aligns with container).
 
 Alias for `fitView()`.
 
+### `resize(width?: number, height?: number): void`
+
+Resize the canvas stage and re-center the diagram. Call this when the container changes size (window resize, browser fullscreen, sidebar collapse). With no arguments the stage is sized to the container's current `clientWidth` / `clientHeight`; when the container reports zero (e.g. while hidden) the current dimension is kept.
+
+```typescript
+const ro = new ResizeObserver(() => renderer.resize());
+ro.observe(container);
+// or simply: new VsmRenderer({ container, system, autoResize: true })
+```
+
+Zoom and vertical pan are preserved; horizontal pan is re-centered so the diagram spine (`SPINE_X`) stays centered in the new width. The built-in fullscreen toggle calls `resize()` automatically on `fullscreenchange`.
+
 ### `destroy(): void`
 
-Tear down the Konva stage, remove the controls and system-label overlay DOM elements, and de-register all event listeners. Call this in framework cleanup hooks (React `useEffect` return, Vue `onUnmounted`, etc.).
+Tear down the Konva stage, disconnect the container `ResizeObserver` (if `autoResize` was enabled), remove the controls and system-label overlay DOM elements, and de-register all event listeners. Call this in framework cleanup hooks (React `useEffect` return, Vue `onUnmounted`, etc.).
 
 ```typescript
 useEffect(() => {

@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VsmRenderer } from '../src/VsmRenderer';
 import type { VsmSystem, VsmEvent, ChannelVisibility } from '../src/types';
-import { MAX_ZOOM, MIN_ZOOM } from '../src/layout';
+import { MAX_ZOOM, MIN_ZOOM, SPINE_X } from '../src/layout';
 
 // ============================================================================
 // Konva mock
@@ -35,6 +35,7 @@ const mockStage = {
   batchDraw: vi.fn(),
   scale: vi.fn(),
   position: vi.fn(),
+  size: vi.fn(),
   scaleX: vi.fn(() => 1),
   x: vi.fn(() => 0),
   y: vi.fn(() => 0),
@@ -183,6 +184,7 @@ function makeRenderer(
     width?: number;
     height?: number;
     container?: HTMLElement;
+    autoResize?: boolean;
   } = {}
 ): VsmRenderer {
   return new VsmRenderer({
@@ -193,6 +195,7 @@ function makeRenderer(
     levelLabel: overrides.levelLabel,
     width: overrides.width,
     height: overrides.height,
+    autoResize: overrides.autoResize,
   });
 }
 
@@ -430,6 +433,154 @@ describe('VsmRenderer', () => {
       const renderer = makeRenderer();
       renderer.resetView();
       renderer.resetView();
+    });
+  });
+
+  // --------------------------------------------------------------------------
+
+  describe('#resize()', () => {
+    it('resizes the stage to explicit dimensions', () => {
+      const renderer = makeRenderer();
+      renderer.resize(1200, 800);
+      expect(mockStage.size).toHaveBeenCalledWith({ width: 1200, height: 800 });
+    });
+
+    it('re-centers the spine horizontally after an explicit resize', () => {
+      const renderer = makeRenderer();
+      renderer.resize(1200, 800);
+      // zoom is 1 → panX = 1200/2 - SPINE_X = 32, panY preserved at 0
+      expect(mockStage.position).toHaveBeenLastCalledWith({ x: 1200 / 2 - SPINE_X, y: 0 });
+    });
+
+    it('keeps the spine centered at the current zoom level', () => {
+      const renderer = makeRenderer();
+      renderer.zoomIn(2); // zoom = 2
+      renderer.resize(1200, 800);
+      expect(mockStage.position).toHaveBeenLastCalledWith({ x: 1200 / 2 - SPINE_X * 2, y: 0 });
+    });
+
+    it('falls back to container clientWidth/clientHeight when args are omitted', () => {
+      const container = makeContainer();
+      Object.defineProperty(container, 'clientWidth', { value: 1000, configurable: true });
+      Object.defineProperty(container, 'clientHeight', { value: 700, configurable: true });
+      const renderer = makeRenderer({ container });
+      renderer.resize();
+      expect(mockStage.size).toHaveBeenCalledWith({ width: 1000, height: 700 });
+    });
+
+    it('keeps the current dimension when the container reports zero (hidden)', () => {
+      const container = makeContainer(); // jsdom: clientWidth/clientHeight are 0
+      const renderer = makeRenderer({ container, width: 900, height: 1100 });
+      renderer.resize();
+      expect(mockStage.size).toHaveBeenLastCalledWith({ width: 900, height: 1100 });
+    });
+
+    it('accepts partial overrides (width only)', () => {
+      const container = makeContainer();
+      Object.defineProperty(container, 'clientHeight', { value: 700, configurable: true });
+      const renderer = makeRenderer({ container, width: 900, height: 1100 });
+      renderer.resize(1200);
+      expect(mockStage.size).toHaveBeenLastCalledWith({ width: 1200, height: 700 });
+    });
+
+    it('is callable multiple times in sequence', () => {
+      const renderer = makeRenderer();
+      renderer.resize(1200, 800);
+      renderer.resize(640, 480);
+      expect(mockStage.size).toHaveBeenLastCalledWith({ width: 640, height: 480 });
+    });
+
+    it('does not emit any event', () => {
+      const onEvent = vi.fn();
+      const renderer = makeRenderer({ onEvent });
+      onEvent.mockClear();
+      renderer.resize(1200, 800);
+      expect(onEvent).not.toHaveBeenCalled();
+    });
+  });
+
+  // --------------------------------------------------------------------------
+
+  describe('autoResize option', () => {
+    function stubResizeObserver() {
+      const state = { observe: vi.fn(), disconnect: vi.fn(), callback: null as null | (() => void) };
+      (globalThis as Record<string, unknown>).ResizeObserver = class {
+        constructor(cb: () => void) {
+          state.callback = cb;
+        }
+        observe = state.observe;
+        disconnect = state.disconnect;
+      };
+      return state;
+    }
+
+    function unstubResizeObserver() {
+      delete (globalThis as Record<string, unknown>).ResizeObserver;
+    }
+
+    it('observes the container when autoResize is true', () => {
+      const ro = stubResizeObserver();
+      const container = makeContainer();
+      try {
+        makeRenderer({ container, autoResize: true });
+        expect(ro.observe).toHaveBeenCalledWith(container);
+      } finally {
+        unstubResizeObserver();
+      }
+    });
+
+    it('calls resize() when the container size changes', () => {
+      const ro = stubResizeObserver();
+      const container = makeContainer();
+      Object.defineProperty(container, 'clientWidth', { value: 1000, configurable: true });
+      Object.defineProperty(container, 'clientHeight', { value: 700, configurable: true });
+      try {
+        makeRenderer({ container, autoResize: true });
+        expect(ro.callback).not.toBeNull();
+        ro.callback!();
+        expect(mockStage.size).toHaveBeenCalledWith({ width: 1000, height: 700 });
+      } finally {
+        unstubResizeObserver();
+      }
+    });
+
+    it('does not observe the container by default', () => {
+      const ro = stubResizeObserver();
+      try {
+        makeRenderer();
+        expect(ro.observe).not.toHaveBeenCalled();
+      } finally {
+        unstubResizeObserver();
+      }
+    });
+
+    it('disconnects the observer on destroy()', () => {
+      const ro = stubResizeObserver();
+      try {
+        const renderer = makeRenderer({ autoResize: true });
+        renderer.destroy();
+        expect(ro.disconnect).toHaveBeenCalled();
+      } finally {
+        unstubResizeObserver();
+      }
+    });
+
+    it('does not throw when ResizeObserver is unavailable', () => {
+      unstubResizeObserver(); // ensure absent (jsdom has none)
+      expect(() => makeRenderer({ autoResize: true })).not.toThrow();
+    });
+  });
+
+  // --------------------------------------------------------------------------
+
+  describe('fullscreenchange re-fit', () => {
+    it('re-fits the stage to the container size on fullscreenchange', () => {
+      const container = makeContainer();
+      Object.defineProperty(container, 'clientWidth', { value: 1600, configurable: true });
+      Object.defineProperty(container, 'clientHeight', { value: 900, configurable: true });
+      makeRenderer({ container });
+      document.dispatchEvent(new Event('fullscreenchange'));
+      expect(mockStage.size).toHaveBeenLastCalledWith({ width: 1600, height: 900 });
     });
   });
 

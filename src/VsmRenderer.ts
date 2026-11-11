@@ -28,6 +28,7 @@ import {
   SQ_H,
   S1_MGMT_DY,
   ENV_X,
+  SPINE_X,
 } from './layout';
 import { renderEnvironmentLayer } from './renderers/EnvironmentRenderer';
 import { renderChannelLayer } from './renderers/ChannelRenderer';
@@ -108,6 +109,10 @@ export class VsmRenderer {
   private width!: number;
   private height!: number;
 
+  // Container element and optional container-size observation
+  private containerEl!: HTMLElement;
+  private resizeObserver: ResizeObserver | null = null;
+
   // Zoom/pan state
   private zoom: number = 1;
   private panX: number = 0;
@@ -144,6 +149,9 @@ export class VsmRenderer {
     // Create stage
     this.createStage(options.container);
 
+    // Optionally track container size changes
+    if (options.autoResize) this.startAutoResize();
+
     // Create layers
     this.createLayers();
 
@@ -173,6 +181,8 @@ export class VsmRenderer {
     if (!containerEl) {
       throw new Error(`Container not found: ${container}`);
     }
+
+    this.containerEl = containerEl;
 
     this.stage = new Konva.Stage({
       container: containerEl as unknown as HTMLDivElement,
@@ -214,6 +224,24 @@ export class VsmRenderer {
     for (const channel of ['a', 'b', 'c', 'd', 'e', 'f', 'g'] as ChannelId[]) {
       this.layers.channels.add(this.channelGroups[channel]);
     }
+  }
+
+  /**
+   * Start observing the container with a ResizeObserver; every size change
+   * triggers {@link resize}. No-op in environments without ResizeObserver.
+   */
+  private startAutoResize(): void {
+    if (typeof ResizeObserver === 'undefined') return;
+    this.resizeObserver = new ResizeObserver(() => this.resize());
+    this.resizeObserver.observe(this.containerEl);
+  }
+
+  /**
+   * Stop the container ResizeObserver, if any.
+   */
+  private stopAutoResize(): void {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
   }
 
   // ==========================================================================
@@ -338,6 +366,45 @@ export class VsmRenderer {
   }
 
   /**
+   * Resize the canvas stage and re-center the diagram.
+   *
+   * Call this when the container changes size (window resize, browser
+   * fullscreen, sidebar collapse). With no arguments the stage is sized to
+   * the container's current `clientWidth` / `clientHeight`; when the
+   * container reports zero (e.g. while hidden) the current dimension is
+   * kept.
+   *
+   * Zoom and vertical pan are preserved; horizontal pan is re-centered so
+   * the diagram spine (`SPINE_X`) stays in the middle of the new width. The
+   * built-in fullscreen toggle calls this automatically on
+   * `fullscreenchange`, and the `autoResize` constructor option wires it to
+   * a container `ResizeObserver`.
+   *
+   * @param width - New stage width in pixels. Default: container `clientWidth`.
+   * @param height - New stage height in pixels. Default: container `clientHeight`.
+   *
+   * @example
+   * ```typescript
+   * // manual:
+   * const ro = new ResizeObserver(() => renderer.resize());
+   * ro.observe(container);
+   *
+   * // or built-in:
+   * const renderer = new VsmRenderer({ container, system, autoResize: true });
+   * ```
+   */
+  resize(width?: number, height?: number): void {
+    const w = width ?? (this.containerEl.clientWidth || this.width);
+    const h = height ?? (this.containerEl.clientHeight || this.height);
+    this.width = w;
+    this.height = h;
+    this.stage.size({ width: w, height: h });
+    // Keep the spine horizontally centered at the current zoom level
+    this.panX = w / 2 - SPINE_X * this.zoom;
+    this.updateTransform();
+  }
+
+  /**
    * Scale the canvas up. Clamped to `MAX_ZOOM` (6×).
    *
    * @param factor - Zoom multiplier applied to the current scale. Default `1.4`.
@@ -358,12 +425,14 @@ export class VsmRenderer {
   }
 
   /**
-   * Tear down the renderer: removes the controls overlay DOM element,
+   * Tear down the renderer: disconnects the container `ResizeObserver` (if
+   * `autoResize` was enabled), removes the controls overlay DOM element,
    * de-registers the `fullscreenchange` listener, and destroys the Konva
    * stage. Call this in framework cleanup hooks (React `useEffect` return,
    * Vue `onUnmounted`, etc.).
    */
   destroy(): void {
+    this.stopAutoResize();
     if (this.fsChangeListener) {
       document.removeEventListener('fullscreenchange', this.fsChangeListener);
       this.fsChangeListener = null;
@@ -720,6 +789,8 @@ export class VsmRenderer {
     const fsBtn = makeBtn('Toggle fullscreen', ICON_FULLSCREEN, () => this.toggleFullscreen());
     const onFsChange = () => {
       fsBtn.innerHTML = document.fullscreenElement ? ICON_FULLSCREEN_EXIT : ICON_FULLSCREEN;
+      // The container takes the full screen on fullscreen — re-fit the stage
+      this.resize();
     };
     document.addEventListener('fullscreenchange', onFsChange);
     this.fsChangeListener = onFsChange;
