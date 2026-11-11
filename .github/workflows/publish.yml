@@ -1,8 +1,12 @@
 name: Publish
 
-# Publishes the npm package to two registries on every GitHub Release:
-#   1. GitHub Packages (primary, uses package.json publishConfig.registry)
-#   2. npmjs public registry (requires the NPM_TOKEN repo secret)
+# Publishes the npm package on every GitHub Release, with each registry in its
+# own job so one registry failing does not block the other:
+#   1. publish-github — GitHub Packages (uses package.json publishConfig.registry)
+#   2. publish-npmjs  — npmjs public registry (requires the NPM_TOKEN repo secret)
+#
+# The GitHub Pages demo is deployed separately on every merge to main
+# (deploy-pages job in ci-release.yml), which runs before any release.
 
 on:
   release:
@@ -11,21 +15,22 @@ on:
 permissions:
   contents: write
   packages: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
-  publish:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Publish to GitHub Packages. The shared prepare steps are YAML-anchored here
+  # and reused by publish-npmjs below.
+  # ─────────────────────────────────────────────────────────────────────────────
+  publish-github:
+    name: Publish to GitHub Packages
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
 
     steps:
-      - uses: actions/checkout@v7
+      - &checkout
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -34,30 +39,36 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@captador'
 
-      # setup-node only writes auth for its own registry-url, so add the
-      # npmjs token line to the same project .npmrc (expanded at publish time).
-      - name: Add npmjs auth to .npmrc
-        run: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' >> .npmrc
+      # pnpm does not expand env vars in auth settings from the project-level
+      # .npmrc (what setup-node's registry-url would write), so write the
+      # literal token to the user-level ~/.npmrc, which pnpm does read.
+      - name: Configure GitHub Packages auth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> "$HOME/.npmrc"
 
-      - uses: pnpm/action-setup@v6
+      - &pnpm-setup
+        uses: pnpm/action-setup@v6
         with:
           version: 11
 
-      - run: echo "cache-dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - &pnpm-cache-dir
+        run: echo "cache-dir=$(pnpm store path)" >> $GITHUB_OUTPUT
         id: pnpm-cache
 
-      - uses: actions/cache@v6
+      - &pnpm-cache
+        uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-cache.outputs.cache-dir }}
           key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
-      - name: Extract version from tag
+      - &extract-version
+        name: Extract version from tag
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
-      - name: Validate semver tag
+      - &validate-version
+        name: Validate semver tag
         run: |
           if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
             echo "Tag $GITHUB_REF_NAME is not a valid semver release tag (expected vX.Y.Z)"
@@ -65,13 +76,17 @@ jobs:
           fi
 
       # Skip the npm publish when this release tag introduces no changes to
-      # the published-package code paths relative to the previous tag, so
-      # docs/demo/CI-only releases do not publish an identical package.
-      - name: Check for code changes since previous tag
+      # the published-package code paths or the release/publishing workflows
+      # relative to the previous tag (safety net for manually created
+      # releases). Changes under .github/workflows count because they can
+      # change what gets published and how. Demo-only changes never reach this
+      # workflow — they deploy to Pages on merge to main without a release.
+      - &code-changes
+        name: Check for code changes since previous tag
         id: code-changes
         run: |
           PREV_TAG=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
-          PATHS="src package.json tsconfig.json vite.config.ts pnpm-lock.yaml pnpm-workspace.yaml"
+          PATHS="src package.json tsconfig.json vite.config.ts pnpm-lock.yaml pnpm-workspace.yaml .github/workflows"
           if [ -n "$PREV_TAG" ] &&
              [ -z "$(git diff --name-only "$PREV_TAG" "${GITHUB_REF_NAME}" -- $PATHS)" ]; then
             echo "No code changes between $PREV_TAG and $GITHUB_REF_NAME — skipping npm publish."
@@ -84,7 +99,8 @@ jobs:
       # in the working tree only — pnpm publish packs it into the npm tarball
       # as-is. Nothing is committed or pushed to main, so the branch ruleset
       # (require PR) stays fully enforced.
-      - name: Set version from release tag
+      - &set-version
+        name: Set version from release tag
         if: steps.code-changes.outputs.changed == 'true'
         run: |
           node -e "
@@ -94,26 +110,58 @@ jobs:
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
 
-      - run: pnpm install --frozen-lockfile
+      - &install
+        run: pnpm install --frozen-lockfile
         if: steps.code-changes.outputs.changed == 'true'
 
-      - run: pnpm run build
+      - &build
+        run: pnpm run build
         if: steps.code-changes.outputs.changed == 'true'
 
       - name: Publish to GitHub Packages
         run: pnpm publish --no-git-checks
         if: steps.code-changes.outputs.changed == 'true'
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Publish to npmjs. Reuses the anchored prepare steps from publish-github;
+  # only the registry auth and the publishConfig switch differ.
+  # ─────────────────────────────────────────────────────────────────────────────
+  publish-npmjs:
+    name: Publish to npmjs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - *checkout
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      # Same as publish-github: pnpm ignores env-var auth in the project-level
+      # .npmrc, so write the literal token to the user-level ~/.npmrc instead.
+      - name: Configure npmjs auth
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> "$HOME/.npmrc"
+
+      - *pnpm-setup
+      - *pnpm-cache-dir
+      - *pnpm-cache
+      - *extract-version
+      - *validate-version
+      - *code-changes
+      - *set-version
+      - *install
+      - *build
 
       # package.json publishConfig points at GitHub Packages and cannot be
       # overridden by --registry, so point it at npmjs for this publish only
       # (the change is never committed — the version-bump push already happened).
       # Scoped packages need access: public on npmjs.
-      - name: Publish to npmjs
+      - name: Point publishConfig at npmjs
         if: steps.code-changes.outputs.changed == 'true'
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           node -e "
             const fs = require('fs');
@@ -121,48 +169,7 @@ jobs:
             pkg.publishConfig = { registry: 'https://registry.npmjs.org', access: 'public' };
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
-          pnpm publish --no-git-checks
 
-  deploy-pages:
-    name: Deploy Demo to GitHub Pages
-    needs: publish
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: main
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 11
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-
-      - name: Get pnpm store path
-        id: pnpm-cache
-        run: echo "dir=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v6
-        with:
-          path: ${{ steps.pnpm-cache.outputs.dir }}
-          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: pnpm-${{ runner.os }}-
-
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm build:demo
-
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist-demo
-
-      - uses: actions/deploy-pages@v4
-        id: deployment
+      - name: Publish to npmjs
+        run: pnpm publish --no-git-checks
+        if: steps.code-changes.outputs.changed == 'true'

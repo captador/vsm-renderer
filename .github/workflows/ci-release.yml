@@ -45,13 +45,72 @@ jobs:
       - run: pnpm test
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Auto Release — runs only on pushes to main once tests pass.
-  # Determines the next semantic version from conventional commit messages,
-  # then creates a GitHub Release. The existing publish.yml picks up the release
-  # event and publishes the npm package to GitHub Packages.
+  # GitHub Pages — deploys the demo on every merge to main, after tests pass
+  # and before any release. Not gated on code-change detection; the release
+  # job below waits for this job, so the Pages site is always up to date
+  # ahead of a release.
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy-pages:
+    name: Deploy Demo to GitHub Pages
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Get pnpm store path
+        id: pnpm-cache
+        run: echo "dir=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-cache.outputs.dir }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build:demo
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-demo
+
+      - uses: actions/deploy-pages@v4
+        id: deployment
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Auto Release — runs only on pushes to main, after tests AND the Pages deploy
+  # pass. Determines the next semantic version from conventional commit messages,
+  # then creates a GitHub Release. publish.yml picks up the release event and
+  # publishes the npm package to GitHub Packages and npmjs.
   #
-  # Skipped when no published-package code changed since the last tag, so
-  # docs/demo/CI-only pushes do not produce an empty release.
+  # Skipped when no prod package code and no release/publishing workflow file
+  # changed since the last tag, so docs/demo-only pushes do not produce a
+  # release (the Pages demo already deployed on merge above).
   #
   # Version bump rules (conventional commits):
   #   BREAKING CHANGE or type!:  →  major
@@ -60,7 +119,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   release:
     name: Auto Release
-    needs: test
+    needs: [test, deploy-pages]
     if: |
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
@@ -79,8 +138,10 @@ jobs:
         id: code-changes
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          # Paths that affect the published npm package.
-          PATHS="src package.json tsconfig.json vite.config.ts pnpm-lock.yaml pnpm-workspace.yaml"
+          # Paths that trigger a release: prod package code plus the
+          # release/publishing workflow files. Demo and docs changes do not
+          # produce a release — the Pages demo already deployed on merge.
+          PATHS="src package.json tsconfig.json vite.config.ts pnpm-lock.yaml pnpm-workspace.yaml .github/workflows"
           if [ -n "$LAST_TAG" ] &&
              [ -z "$(git diff --name-only "$LAST_TAG" HEAD -- $PATHS)" ]; then
             echo "No code changes since $LAST_TAG — skipping release."
