@@ -503,7 +503,11 @@ describe('VsmRenderer', () => {
 
   describe('autoResize option', () => {
     function stubResizeObserver() {
-      const state = { observe: vi.fn(), disconnect: vi.fn(), callback: null as null | (() => void) };
+      const state = {
+        observe: vi.fn(),
+        disconnect: vi.fn(),
+        callback: null as null | (() => void),
+      };
       (globalThis as Record<string, unknown>).ResizeObserver = class {
         constructor(cb: () => void) {
           state.callback = cb;
