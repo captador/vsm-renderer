@@ -208,24 +208,25 @@ function makeRenderer(
 // - 10:   envBlobGroup-1
 // - 11:   eyeGroup
 // - 12-18: channelGroups a–g (renderChannelLayer, called inside renderChannelsLayer)
-// - 19:   s5 bar (renderMetasystemLayer)
-// - 20:   s4 bar
-// - 21:   s3 bar
-// - 22:   s3starG
-// - 23:   s2G
-// - 24:   unitGroup-0 (renderUnitsLayer)
-// - 25:   unitGroup-1
+// - 19:   channel-a overlap mask clip group (envLen - 1 = 1 for this system)
+// - 20:   s5 bar (renderMetasystemLayer)
+// - 21:   s4 bar
+// - 22:   s3 bar
+// - 23:   s3starG
+// - 24:   s2G
+// - 25:   unitGroup-0 (renderUnitsLayer)
+// - 26:   unitGroup-1
 const G = {
   futureBlob: 7,
   envBlobGroup0: 9,
   envBlobGroup1: 10,
-  s5: 19,
-  s4: 20,
-  s3: 21,
-  s3star: 22,
-  s2: 23,
-  unit0: 24,
-  unit1: 25,
+  s5: 20,
+  s4: 21,
+  s3: 22,
+  s3star: 23,
+  s2: 24,
+  unit0: 25,
+  unit1: 26,
 } as const;
 
 beforeEach(() => {
@@ -775,9 +776,10 @@ describe('VsmRenderer', () => {
       makeRenderer({ system: rootSystem, onEvent });
       onEvent.mockClear();
 
-      // For a single-unit system: unit0 is at index 24 - 1 = 23 (one fewer envBlobGroup)
-      // futureBlob(14), envGroup(15), envBlobGroup-0(16), eyeGroup(17),
-      // s5(18), s4(19), s3(20), s3star(21), s2(22), unit0(23)
+      // For a single-unit system: unit0 is at index 24 - 1 = 23 (one fewer envBlobGroup,
+      // and envLen - 1 = 0 mask groups)
+      // futureBlob(7), envGroup(8), envBlobGroup-0(9), eyeGroup(10),
+      // channelGroups 11-17, s5(18), s4(19), s3(20), s3star(21), s2(22), unit0(23)
       const unitGroup = mockGroupRegistry.groups[23];
       unitGroup.fire('dblclick', { cancelBubble: false });
 

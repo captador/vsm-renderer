@@ -52,7 +52,8 @@ export {
 } from './layout';
 
 // Export colors
-export { COLORS } from './utils/palette';
+export { COLORS, getColors } from './utils/palette';
+export type { Palette, RendererTheme } from './utils/palette';
 
 // Export geometry utilities
-export { blob, envSilhouette, wave, SHAPE_DEF, shapeD } from './utils/geometry';
+export { blob, blobPoints, envSilhouette, wave, SHAPE_DEF, shapeD } from './utils/geometry';

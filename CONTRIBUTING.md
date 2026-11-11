@@ -10,7 +10,7 @@ By participating in this project, you agree to abide by the [Code of Conduct](CO
 
 ### Reporting Bugs
 
-- Use the [GitHub Issues](https://github.com/arsenykrasikov/vsm-renderer/issues) to report bugs
+- Use the [GitHub Issues](https://github.com/captador/vsm-renderer/issues) to report bugs
 - Include a clear description of the issue
 - Provide steps to reproduce
 - Include relevant code snippets or screenshots

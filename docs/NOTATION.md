@@ -57,16 +57,16 @@ This renderer draws each element as specified below. **Sides matter for readabil
 
 **S1 diagonal layout:** the management square sits at a ~42° offset above and to the right of its operation circle. The two are connected by a diagonal line. This arrangement saves vertical space while preserving the Beer notation distinction between operation and management.
 
-**Holon indicator:** if an S1 unit contains a nested VSM (i.e. it is a _holon_), both its operation circle, management square, and the connecting diagonal line are drawn with a **thicker stroke** (~3.5 px vs ~2 px for leaf units). No additional icon is shown.
+**Holon indicator:** if an S1 unit contains a nested VSM (i.e. it is a _holon_), its management square carries a BPMN-style **[+] marker** — horizontally centred, vertically aligned to the bottom edge of the square. All S1 shapes use the same stroke width (~2 px) regardless of holon status.
 
 ### 3.3 Environment nodes
 
-| Element             | Shape                      | Fill                     | Notes                                            |
-| ------------------- | -------------------------- | ------------------------ | ------------------------------------------------ |
-| Outer environment   | Large organic amoeba/cloud | `#D7D7D7` at 50% opacity | Encompasses all S1 sub-environments              |
-| S1 sub-environment  | Organic blob per unit      | `#8F8F8F`                | One per S1 unit; positioned left of the unit row |
-| Future environment  | Organic cloud              | `#A2DAA0`                | Top of environment column; scanned by S4         |
-| Environment overlap | Amber lens/eye shape       | `#FFCC50`                | Between adjacent S1 sub-environments             |
+| Element             | Shape                      | Fill                                                   | Notes                                                                        |
+| ------------------- | -------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Outer environment   | Large organic amoeba/cloud | Slightly grey fill `#D7D7D7` at 50% opacity, no border | Encompasses all S1 sub-environments                                          |
+| S1 sub-environment  | Organic blob per unit      | `#8F8F8F`                                              | One per S1 unit, left of the unit row, white name label centered on the blob |
+| Future environment  | Organic cloud              | `#A2DAA0`                                              | Top of environment column; scanned by S4                                     |
+| Environment overlap | Darker grey color mask     | `#6B6B6B`                                              | Paints the actual intersection of adjacent S1 sub-environment blobs          |
 
 ---
 
@@ -76,10 +76,11 @@ This renderer draws each element as specified below. **Sides matter for readabil
 System 5 / Policy         #A0C0D5  (light blue)
 System 4 / Intelligence   #7BCA79  (green)
 System 3 / Control        #FF5534  (red — also S3*)
-System 2 / Coordination   #FFCC50  (amber — also resource ladder, squiggles, env overlaps)
+System 2 / Coordination   #FFCC50  (amber — also resource ladder, squiggles)
+Env overlap mask          #6B6B6B  (darker grey)
 Future environment        #A2DAA0  (pale green)
 Navy connectors           #1D3880
-Environment amoeba outer  #D7D7D7
+Environment amoeba outer  #D7D7D7 at 50% opacity, no border
 S1 sub-environment blobs  #8F8F8F
 Element stroke / outlines #9A9A9A
 S1 operation / mgmt fill  #FFFFFF
@@ -96,7 +97,7 @@ Channels are the connective tissue of the VSM. Each must be **independently togg
 
 | ID    | Name                     | Visual                                                                                              | Color     | Connects                                            |
 | ----- | ------------------------ | --------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------- |
-| **a** | Environmental overlaps   | Amber lens shape (filled ellipse)                                                                   | `#FFCC50` | Adjacent S1 sub-environments                        |
+| **a** | Environmental overlaps   | Darker grey color mask clipped to the intersection of adjacent env blobs (no lens shape)            | `#6B6B6B` | Adjacent S1 sub-environments                        |
 | **b** | System 3\* audit         | Vertical spine from S3\* triangle down + horizontal branch into each S1 **ops circle**              | `#FF5534` | S3\* → each S1 ops circle only                      |
 | **c** | Operational dependencies | Wavy vertical arrows between adjacent S1 ops circles                                                | `#FFCC50` | Adjacent S1 ops circles                             |
 | **d** | Resource bargain         | Vertical line (right side) with horizontal rung at each S1 **mgmt square** row                      | `#FF5534` | S3 ↔ each S1 mgmt square                            |
@@ -192,12 +193,12 @@ All clickable elements must indicate their interactivity through **hover color t
 
 ## 10. Info-panel copy (per element)
 
-| Element              | Copy                                                                                                                         |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| S5 — Policy/Identity | Ultimate authority and identity. Sets policy, holds the ethos, balances present (S3) vs future (S4). Governs by exception.   |
-| S4 — Intelligence    | Scans the outside and the future; models options; adapts. Bridges the inside (S3) with the environment.                      |
-| S3 — Control         | Runs the whole S1 complex here and now; allocates resources; drives synergy.                                                 |
-| S3\* — Audit         | Sporadic, direct probe into operations that bypasses the command line to verify reality. Without it, S3 has no check.        |
-| S2 — Coordination    | Damps oscillation and conflict between units via shared standards and scheduling. Reduces load on S3.                        |
-| S1 — Operation       | A primary value-producing unit. Itself a complete viable system — drill down to unfold.                                      |
-| Environment          | Each unit has its own local environment; these overlap (amber lenses). S4 additionally scans the future environment (green). |
+| Element              | Copy                                                                                                                                                       |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S5 — Policy/Identity | Ultimate authority and identity. Sets policy, holds the ethos, balances present (S3) vs future (S4). Governs by exception.                                 |
+| S4 — Intelligence    | Scans the outside and the future; models options; adapts. Bridges the inside (S3) with the environment.                                                    |
+| S3 — Control         | Runs the whole S1 complex here and now; allocates resources; drives synergy.                                                                               |
+| S3\* — Audit         | Sporadic, direct probe into operations that bypasses the command line to verify reality. Without it, S3 has no check.                                      |
+| S2 — Coordination    | Damps oscillation and conflict between units via shared standards and scheduling. Reduces load on S3.                                                      |
+| S1 — Operation       | A primary value-producing unit. Itself a complete viable system — drill down to unfold.                                                                    |
+| Environment          | Each unit has its own local environment; these overlap (darker grey color mask on the intersection). S4 additionally scans the future environment (green). |

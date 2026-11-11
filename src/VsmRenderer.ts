@@ -9,7 +9,7 @@
 
 import Konva from 'konva';
 import { VsmSystem, VsmEvent, ChannelId, ChannelVisibility, VsmRendererOptions } from './types';
-import { COLORS } from './utils/palette';
+import { COLORS, getColors, type Palette, type RendererTheme } from './utils/palette';
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
@@ -85,6 +85,9 @@ export class VsmRenderer {
   private system!: VsmSystem;
   private channels!: ChannelVisibility;
   private onEvent?: (event: VsmEvent) => void;
+  private theme: RendererTheme = 'light';
+  private colors: Palette = COLORS;
+  private controlButtons: HTMLButtonElement[] = [];
 
   // Drill-down breadcrumb stack (ancestor systems, outermost first)
   private _path: VsmSystem[] = [];
@@ -135,6 +138,8 @@ export class VsmRenderer {
       ...options.channels,
     };
     this.onEvent = options.onEvent;
+    this.theme = options.theme ?? 'light';
+    this.colors = getColors(this.theme);
 
     // Create stage
     this.createStage(options.container);
@@ -273,6 +278,24 @@ export class VsmRenderer {
   }
 
   /**
+   * Switch the diagram color theme at runtime and re-draw all layers.
+   *
+   * The Konva stage is transparent, so the host page background shows through
+   * — in dark mode set the container/page background to a dark color. Only
+   * colors that are unreadable on dark (navy connectors, unit labels,
+   * amplifier arrows) change; mid greys and saturated fills are shared.
+   *
+   * @param theme - `'light'` or `'dark'`.
+   */
+  setTheme(theme: RendererTheme): void {
+    this.theme = theme;
+    this.colors = getColors(theme);
+    this.render();
+    this.refreshSystemLabel();
+    this.applyControlsTheme();
+  }
+
+  /**
    * Reset zoom to 1× and pan to origin (top-left of the canvas aligns with
    * the container). Also bound to the canvas controls widget "1:1" button.
    */
@@ -353,6 +376,7 @@ export class VsmRenderer {
       this.systemLabelEl.remove();
       this.systemLabelEl = null;
     }
+    this.controlButtons = [];
     this.stage.destroy();
     this.stage = null as unknown as Konva.Stage;
   }
@@ -377,11 +401,11 @@ export class VsmRenderer {
     if (n === 0) return;
 
     // Render each layer using component renderers
-    renderEnvironmentLayer(this.layers.env, this.system, (e) => this.emitEvent(e));
+    renderEnvironmentLayer(this.layers.env, this.system, (e) => this.emitEvent(e), this.colors);
     this.renderChannelsLayer();
-    renderMetasystemLayer(this.layers.meta, this.system, (e) => this.emitEvent(e));
-    renderUnitsLayer(this.layers.units, this.system, (e) => this.emitEvent(e));
-    renderTopLayer(this.layers.top);
+    renderMetasystemLayer(this.layers.meta, this.system, (e) => this.emitEvent(e), this.colors);
+    renderUnitsLayer(this.layers.units, this.system, (e) => this.emitEvent(e), this.colors);
+    renderTopLayer(this.layers.top, this.colors);
 
     // Draw all layers
     this.stage.batchDraw();
@@ -400,7 +424,12 @@ export class VsmRenderer {
     }
 
     // Use the ChannelRenderer
-    const groups = renderChannelLayer(this.layers.channels, this.system, this.channels);
+    const groups = renderChannelLayer(
+      this.layers.channels,
+      this.system,
+      this.channels,
+      this.colors
+    );
 
     // Update our channel group references
     for (const channel of ['a', 'b', 'c', 'd', 'e', 'f', 'g'] as ChannelId[]) {
@@ -466,7 +495,7 @@ export class VsmRenderer {
 
   private updateSelection(event: VsmEvent): void {
     const DASH = [6, 4];
-    const STROKE = COLORS.navy;
+    const STROKE = this.colors.navy;
     const SW = 2;
     const P = 3; // padding around the shape
 
@@ -592,7 +621,7 @@ export class VsmRenderer {
     const el = document.createElement('div');
     el.style.cssText =
       'position:absolute;top:12px;left:12px;pointer-events:none;z-index:99;' +
-      'font-family:-apple-system,system-ui,sans-serif;line-height:1.35;';
+      'font-family:-apple-system,system-ui,sans-serif;line-height:1.35;border-radius:8px;';
     container.appendChild(el);
     this.systemLabelEl = el;
     this.refreshSystemLabel();
@@ -601,6 +630,14 @@ export class VsmRenderer {
   private refreshSystemLabel(): void {
     const el = this.systemLabelEl;
     if (!el) return;
+
+    // Font colors are constant across themes (the S1/system name must not
+    // change color in dark mode); in dark theme the label gets a light
+    // backing pill so the unchanged dark font stays readable on the dark
+    // canvas.
+    const dark = this.theme === 'dark';
+    el.style.background = dark ? 'rgba(255,255,255,0.88)' : 'transparent';
+    el.style.padding = dark ? '6px 10px' : '0';
 
     const lineStyle = 'white-space:nowrap;max-width:440px;overflow:hidden;text-overflow:ellipsis;';
 
@@ -614,10 +651,39 @@ export class VsmRenderer {
     while (el.firstChild) el.removeChild(el.firstChild);
 
     if (this.levelLabel) {
-      el.appendChild(mkLine(this.levelLabel, '14px', '700', '#1D3880'));
-      el.appendChild(mkLine(this.system.name, '11px', '400', '#888'));
+      el.appendChild(mkLine(this.levelLabel, '14px', '700', COLORS.navy));
+      el.appendChild(mkLine(this.system.name, '11px', '400', COLORS.labelMuted));
     } else {
-      el.appendChild(mkLine(this.system.name, '14px', '700', '#1D3880'));
+      el.appendChild(mkLine(this.system.name, '14px', '700', COLORS.navy));
+    }
+  }
+
+  private controlsBtnStyle(): string {
+    const dark = this.theme === 'dark';
+    const border = dark ? '#3A4150' : '#D0D0D0';
+    const bg = dark ? '#262B36' : 'white';
+    const fg = dark ? '#D6DAE2' : '#444';
+    return (
+      'width:32px;height:32px;border:1px solid ' +
+      border +
+      ';border-radius:6px;background:' +
+      bg +
+      ';' +
+      'color:' +
+      fg +
+      ';cursor:pointer;display:flex;align-items:center;justify-content:center;' +
+      'padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.15);font-size:12px;font-weight:600;line-height:1;'
+    );
+  }
+
+  private controlsHoverBg(): string {
+    return this.theme === 'dark' ? '#333A48' : '#F0F4F8';
+  }
+
+  private applyControlsTheme(): void {
+    const base = this.controlsBtnStyle();
+    for (const btn of this.controlButtons) {
+      btn.style.cssText = base;
     }
   }
 
@@ -628,26 +694,22 @@ export class VsmRenderer {
     panel.style.cssText =
       'position:absolute;top:16px;right:16px;display:flex;flex-direction:column;gap:4px;z-index:100;';
 
-    const btnBase =
-      'width:32px;height:32px;border:1px solid #d0d0d0;border-radius:6px;background:white;' +
-      'color:#444;cursor:pointer;display:flex;align-items:center;justify-content:center;' +
-      'padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.15);font-size:12px;font-weight:600;line-height:1;';
-
     const makeBtn = (title: string, icon: string, onClick: () => void): HTMLButtonElement => {
       const btn = document.createElement('button');
       btn.title = title;
       btn.innerHTML = icon;
-      btn.style.cssText = btnBase;
+      btn.style.cssText = this.controlsBtnStyle();
       btn.addEventListener('mouseenter', () => {
-        btn.style.background = '#f0f4f8';
+        btn.style.background = this.controlsHoverBg();
       });
       btn.addEventListener('mouseleave', () => {
-        btn.style.background = 'white';
+        btn.style.background = this.theme === 'dark' ? '#262B36' : 'white';
       });
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         onClick();
       });
+      this.controlButtons.push(btn);
       return btn;
     };
 

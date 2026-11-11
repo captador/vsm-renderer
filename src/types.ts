@@ -8,6 +8,8 @@
  * ```
  */
 
+import type { RendererTheme } from './utils/palette';
+
 // ============================================================================
 // Core data types
 // ============================================================================
@@ -123,7 +125,7 @@ export interface VsmSystem {
 
 /**
  * Channel identifiers:
- * - `a` Environmental overlaps (amber lenses between sub-env blobs)
+ * - `a` Environmental overlaps (darker grey mask on the blob intersection)
  * - `b` S3\* audit lines (red, to S1 ops only)
  * - `c` Operational dependencies (wavy lines between adjacent S1 ops)
  * - `d` Resource bargain (right red vertical + rungs to S1 mgmt)
@@ -246,4 +248,13 @@ export interface VsmRendererOptions {
    * When omitted only `system.name` is shown.
    */
   levelLabel?: string;
+  /**
+   * Color theme for the diagram. `'light'` (default) uses the palette as-is;
+   * `'dark'` swaps the colors that are unreadable on a dark canvas (navy
+   * connectors, unit labels, amplifier arrows) for lighter variants. The
+   * stage itself is transparent, so the host page background shows through —
+   * set it to a dark color for dark mode. Change at runtime with
+   * {@link VsmRenderer.setTheme}.
+   */
+  theme?: RendererTheme;
 }

@@ -61,9 +61,9 @@ describe('Geometry Functions', () => {
       expect(path.endsWith('Z')).toBe(true);
     });
 
-    it('should contain Q commands for quadratic curves', () => {
+    it('should contain C commands for the Catmull-Rom cubic border', () => {
       const path = envSilhouette(200, 70, 500, 1);
-      expect(path.includes('Q')).toBe(true);
+      expect(path.includes('C')).toBe(true);
     });
   });
 

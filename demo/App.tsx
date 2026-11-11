@@ -6,7 +6,14 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { VsmRenderer } from '../src/index';
-import type { VsmSystem, S1Unit, ChannelId, ChannelVisibility, VsmEvent } from '../src/index';
+import type {
+  VsmSystem,
+  S1Unit,
+  ChannelId,
+  ChannelVisibility,
+  VsmEvent,
+  RendererTheme,
+} from '../src/index';
 
 // ============================================================================
 // Constants
@@ -74,6 +81,11 @@ function createNestedVSM(depth: number = 0, unitCount: number = 3): VsmSystem {
 }
 
 const initialSystem: VsmSystem = createNestedVSM(0, 3);
+
+// Theme is set on <html data-theme> by the inline script in index.html before
+// first paint (saved choice, else OS preference).
+const initialTheme: RendererTheme =
+  document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 
 // ============================================================================
 // Info Panel Copy
@@ -145,6 +157,7 @@ const App: React.FC = () => {
   const onEventRef = useRef<(event: VsmEvent) => void>(null!);
   const [navStack, setNavStack] = useState<VsmSystem[]>([initialSystem]);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+  const [theme, setTheme] = useState<RendererTheme>(initialTheme);
   const [channels, setChannels] = useState<ChannelVisibility>(ALL_CHANNELS_ON);
   const [selectedElement, setSelectedElement] = useState<{
     type: string;
@@ -260,6 +273,7 @@ const App: React.FC = () => {
       onEvent: (e) => onEventRef.current(e),
       width: 900,
       height: 1100,
+      theme: initialTheme,
     });
     rendererRef.current = renderer;
     return () => {
@@ -286,6 +300,21 @@ const App: React.FC = () => {
   useEffect(() => {
     rendererRef.current?.setChannels(channels);
   }, [channels]);
+
+  // Apply theme to the page chrome and the diagram itself
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem('vsm-demo-theme', theme);
+    } catch {
+      // storage unavailable (private mode) — session-only theme
+    }
+    rendererRef.current?.setTheme(theme);
+  }, [theme]);
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  }, []);
 
   const handleReset = useCallback(() => {
     setNavStack([initialSystem]);
@@ -419,9 +448,14 @@ const App: React.FC = () => {
     <>
       <div className="header">
         <h1>VSM Renderer Demo</h1>
-        <button className="sidebar-toggle" onClick={() => setSidebarOpen((v) => !v)}>
-          {sidebarOpen ? '▶' : '◀'}
-        </button>
+        <div className="header-actions">
+          <button className="theme-toggle" onClick={handleToggleTheme}>
+            {theme === 'dark' ? 'Light theme' : 'Dark theme'}
+          </button>
+          <button className="sidebar-toggle" onClick={() => setSidebarOpen((v) => !v)}>
+            {sidebarOpen ? '▶' : '◀'}
+          </button>
+        </div>
       </div>
       <div className="main">
         <div className="canvas-container">
