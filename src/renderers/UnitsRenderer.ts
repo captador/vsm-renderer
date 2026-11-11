@@ -5,7 +5,7 @@
 
 import Konva from 'konva';
 import { VsmSystem, VsmEvent, S1Unit } from '../types';
-import { COLORS } from '../utils/palette';
+import { COLORS, type Palette } from '../utils/palette';
 import { CIRCLE_X, CIRCLE_R, SQ_CX, SQ_W, SQ_H, S1_MGMT_DY, rowY } from '../layout';
 
 function createUnitClickHandler(
@@ -24,7 +24,8 @@ function createUnitClickHandler(
 export function renderUnitsLayer(
   layer: Konva.Layer,
   system: VsmSystem,
-  emit: (e: VsmEvent) => void
+  emit: (e: VsmEvent) => void,
+  colors: Palette = COLORS
 ): void {
   const n = system.s1.length;
 
@@ -51,14 +52,14 @@ export function renderUnitsLayer(
 
     const my = y - S1_MGMT_DY; // mgmt square centre Y
     const isHolon = Boolean(unit.children);
-    const borderSW = isHolon ? 3.5 : 2;
-    const lineSW = isHolon ? 2.5 : 1.5;
+    const borderSW = 2;
+    const lineSW = 1.5;
 
     // Diagonal connector: op circle centre → lower-left corner of mgmt square
     unitGroup.add(
       new Konva.Line({
         points: [CIRCLE_X, y, SQ_CX - SQ_W / 2, my + SQ_H / 2],
-        stroke: COLORS.stroke,
+        stroke: colors.stroke,
         strokeWidth: lineSW,
         listening: false,
       })
@@ -69,8 +70,8 @@ export function renderUnitsLayer(
       x: CIRCLE_X,
       y,
       radius: CIRCLE_R,
-      fill: COLORS.white,
-      stroke: COLORS.stroke,
+      fill: colors.white,
+      stroke: colors.stroke,
       strokeWidth: borderSW,
       name: `s1-op-${i}`,
     });
@@ -83,25 +84,59 @@ export function renderUnitsLayer(
       width: SQ_W,
       height: SQ_H,
       cornerRadius: 7,
-      fill: COLORS.white,
-      stroke: COLORS.stroke,
+      fill: colors.white,
+      stroke: colors.stroke,
       strokeWidth: borderSW,
       name: `s1-mgmt-${i}`,
     });
     unitGroup.add(mgmtSquare);
 
+    // BPMN-style [+] marker for holons: a small square with a plus inside,
+    // horizontally centred, vertically at the bottom edge of the mgmt square
+    if (isHolon) {
+      const plusCx = SQ_CX;
+      const boxR = 8;
+      const plusCy = my + SQ_H / 2 - boxR - 2;
+      const plusR = 5;
+      const plusProps = { stroke: colors.label, strokeWidth: 1.6, listening: false };
+      unitGroup.add(
+        new Konva.Rect({
+          x: plusCx - boxR,
+          y: plusCy - boxR,
+          width: boxR * 2,
+          height: boxR * 2,
+          stroke: colors.label,
+          strokeWidth: 1.6,
+          listening: false,
+        })
+      );
+      unitGroup.add(
+        new Konva.Line({
+          points: [plusCx - plusR, plusCy, plusCx + plusR, plusCy],
+          ...plusProps,
+        })
+      );
+      unitGroup.add(
+        new Konva.Line({
+          points: [plusCx, plusCy - plusR, plusCx, plusCy + plusR],
+          ...plusProps,
+        })
+      );
+    }
+
     // Label: centered in the box, word-wrapped, truncated with ellipsis if too long
+    // (height reduced to leave room for the [+] marker at the bottom)
     unitGroup.add(
       new Konva.Text({
         x: SQ_CX - SQ_W / 2 + 4,
         y: my - SQ_H / 2,
         width: SQ_W - 8,
-        height: SQ_H,
+        height: SQ_H - 12,
         text: displayName,
         fontSize: 10,
         fontFamily: '-apple-system, system-ui, sans-serif',
         fontStyle: 'bold',
-        fill: '#3a3f45',
+        fill: colors.label,
         align: 'center',
         verticalAlign: 'middle',
         wrap: 'word',
@@ -121,8 +156,8 @@ export function renderUnitsLayer(
     });
 
     unitGroup.on('mouseenter', () => {
-      opCircle.fill(COLORS.hover);
-      mgmtSquare.fill(COLORS.hover);
+      opCircle.fill(colors.hover);
+      mgmtSquare.fill(colors.hover);
       tooltip.getText().text(displayName);
       tooltip.position({ x: SQ_CX + SQ_W / 2 + 6, y: my - SQ_H / 2 });
       tooltip.visible(true);
@@ -131,8 +166,8 @@ export function renderUnitsLayer(
       if (stage?.container()?.style) stage.container()!.style.cursor = 'pointer';
     });
     unitGroup.on('mouseleave', () => {
-      opCircle.fill(COLORS.white);
-      mgmtSquare.fill(COLORS.white);
+      opCircle.fill(colors.white);
+      mgmtSquare.fill(colors.white);
       tooltip.visible(false);
       layer.batchDraw();
       const stage = layer.getStage();

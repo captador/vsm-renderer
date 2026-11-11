@@ -5,7 +5,7 @@
  */
 
 import Konva from 'konva';
-import { COLORS } from '../utils/palette';
+import { COLORS, type Palette } from '../utils/palette';
 import { SHAPE_DEF, shapeD } from '../utils/geometry';
 
 /**
@@ -46,12 +46,12 @@ const TOP_SHAPE_DEF = {
 /**
  * Render the top layer (S5 arms and homeostat)
  */
-export function renderTopLayer(layer: Konva.Layer): void {
+export function renderTopLayer(layer: Konva.Layer, colors: Palette = COLORS): void {
   // S5 dampening arms (ON TOP so their ends stay visible)
   // Left arm
   const armL = new Konva.Path({
     data: shapeD(TOP_SHAPE_DEF.armL),
-    stroke: COLORS.s5,
+    stroke: colors.s5,
     strokeWidth: 6,
     strokeLineCap: 'round',
     name: 'armL',
@@ -62,7 +62,7 @@ export function renderTopLayer(layer: Konva.Layer): void {
   // Right arm
   const armR = new Konva.Path({
     data: shapeD(TOP_SHAPE_DEF.armR),
-    stroke: COLORS.s5,
+    stroke: colors.s5,
     strokeWidth: 6,
     strokeLineCap: 'round',
     name: 'armR',
@@ -74,7 +74,7 @@ export function renderTopLayer(layer: Konva.Layer): void {
   // Red arrow (S3 -> S4)
   const homeostatRed = new Konva.Path({
     data: shapeD(TOP_SHAPE_DEF.red),
-    stroke: COLORS.s3,
+    stroke: colors.s3,
     strokeWidth: 7,
     strokeLineCap: 'round',
     name: 'homeostat-red',
@@ -85,7 +85,7 @@ export function renderTopLayer(layer: Konva.Layer): void {
   // Green arrow (S4 -> S3)
   const homeostatGreen = new Konva.Path({
     data: shapeD(TOP_SHAPE_DEF.green),
-    stroke: COLORS.s4,
+    stroke: colors.s4,
     strokeWidth: 7,
     strokeLineCap: 'round',
     name: 'homeostat-green',

@@ -5,7 +5,7 @@
 
 import Konva from 'konva';
 import type { VsmSystem, VsmEvent, EnvBlob } from '../types';
-import { COLORS, lightenHex } from '../utils/palette';
+import { COLORS, lightenHex, type Palette } from '../utils/palette';
 import { blob, envSilhouette } from '../utils/geometry';
 import { ENV_X, rowY, envRows, totalRows } from '../layout';
 
@@ -28,7 +28,8 @@ function createEnvClickHandler(
 export function renderEnvironmentLayer(
   layer: Konva.Layer,
   system: VsmSystem,
-  emit: (e: VsmEvent) => void
+  emit: (e: VsmEvent) => void,
+  colors: Palette = COLORS
 ): void {
   const n = system.s1.length;
   const envLen = system.environments.length;
@@ -40,11 +41,12 @@ export function renderEnvironmentLayer(
   const rowCount = totalRows(system);
   const lastY = rowY(rowCount - 1);
 
-  // --- Outer silhouette (large grey amoeba encompassing everything) ---
+  // --- Outer silhouette (large amoeba encompassing everything) ---
+  // Slightly grey fill, no border.
   layer.add(
     new Konva.Path({
       data: envSilhouette(ENV_X, 70, lastY + 90, 2),
-      fill: COLORS.envOuter,
+      fill: colors.envOuter,
       opacity: 0.5,
       listening: false,
     })
@@ -55,13 +57,13 @@ export function renderEnvironmentLayer(
 
   const futureBlobPath = new Konva.Path({
     data: blob(ENV_X, 150, 46, 40, 7),
-    fill: COLORS.envFuture,
+    fill: colors.envFuture,
   });
   futureBlob.add(futureBlobPath);
 
   layer.add(futureBlob);
 
-  const futureFill = COLORS.envFuture;
+  const futureFill = colors.envFuture;
   const futureFillHover = lightenHex(futureFill, 30);
 
   futureBlob.on('mouseenter', () => {
@@ -91,7 +93,7 @@ export function renderEnvironmentLayer(
     const envBlobData = system.environments[i];
     const isUnmapped = rowOfEnv[i] >= n;
 
-    const fill = isUnmapped ? COLORS.envBlobUnmapped : COLORS.envBlob;
+    const fill = isUnmapped ? colors.envBlobUnmapped : colors.envBlob;
     const opacity = isUnmapped ? 0.55 : 0.72;
 
     const envBlobGroup = new Konva.Group({ name: `env-${i}`, opacity });
@@ -112,7 +114,28 @@ export function renderEnvironmentLayer(
           fontSize: 18,
           fontStyle: 'bold',
           fontFamily: '-apple-system, system-ui, sans-serif',
-          fill: '#777',
+          fill: colors.labelMuted,
+          listening: false,
+        })
+      );
+    } else {
+      // Name label centered on the blob — white, since dark grey on the grey
+      // blob is hard to read
+      envBlobGroup.add(
+        new Konva.Text({
+          x: ENV_X - 38,
+          y: y - 20,
+          width: 76,
+          height: 40,
+          text: envBlobData.name || envBlobData.id,
+          fontSize: 10,
+          fontFamily: '-apple-system, system-ui, sans-serif',
+          fontStyle: 'bold',
+          fill: colors.white,
+          align: 'center',
+          verticalAlign: 'middle',
+          wrap: 'word',
+          ellipsis: true,
           listening: false,
         })
       );
@@ -156,7 +179,7 @@ export function renderEnvironmentLayer(
           `C ${EYE_CX - 36} ${y - 41} ` +
           `${ENV_BLOB_EX + 36} ${y - 41} ` +
           `${ENV_BLOB_EX} ${y - EYE_GAP}`,
-        stroke: COLORS.navy,
+        stroke: colors.navy,
         strokeWidth: 1.8,
         fill: null as unknown as string,
         listening: false,
@@ -171,7 +194,7 @@ export function renderEnvironmentLayer(
           `C ${ENV_BLOB_EX + 36} ${y + 41} ` +
           `${EYE_CX - 36} ${y + 41} ` +
           `${EYE_CX} ${y + EYE_GAP}`,
-        stroke: COLORS.navy,
+        stroke: colors.navy,
         strokeWidth: 1.8,
         fill: null as unknown as string,
         listening: false,
@@ -191,7 +214,7 @@ export function renderEnvironmentLayer(
           y + EYE_GAP + arrowSize,
         ],
         closed: true,
-        fill: COLORS.navy,
+        fill: colors.navy,
         listening: false,
       })
     );

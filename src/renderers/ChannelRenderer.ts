@@ -6,8 +6,8 @@
 
 import Konva from 'konva';
 import { ChannelId, ChannelVisibility, VsmSystem } from '../types';
-import { COLORS } from '../utils/palette';
-import { wave } from '../utils/geometry';
+import { COLORS, type Palette } from '../utils/palette';
+import { wave, blob, blobPoints } from '../utils/geometry';
 import {
   S3STAR,
   S2,
@@ -26,7 +26,8 @@ import {
 export function renderChannelLayer(
   layer: Konva.Layer,
   system: VsmSystem,
-  channels: ChannelVisibility
+  channels: ChannelVisibility,
+  colors: Palette = COLORS
 ): Record<ChannelId, Konva.Group> {
   const n = system.s1.length;
   const envLen = system.environments.length;
@@ -50,21 +51,35 @@ export function renderChannelLayer(
   }
 
   // -------------------------------------------------------------------------
-  // Channel a — Environmental overlaps: amber lens shapes between sub-env blobs
-  // Spans all adjacent env blobs (by mapped row), including not-mapped ones.
+  // Channel a — Environmental overlaps: darker grey color mask over the
+  // actual intersection of adjacent sub-env blobs (no lens shape). Spans
+  // all adjacent env blobs (by mapped row), including not-mapped ones.
+  // Blob geometry must match EnvironmentRenderer exactly (same seed/amp).
   // -------------------------------------------------------------------------
   for (let i = 0; i < envLen - 1; i++) {
-    const ym = (rowY(rowOfEnv[i]) + rowY(rowOfEnv[i + 1])) / 2;
-    groups.a.add(
-      new Konva.Ellipse({
-        x: ENV_X,
-        y: ym,
-        radiusX: 27,
-        radiusY: 11,
-        fill: COLORS.amber,
-        opacity: 0.6,
+    const y1 = rowY(rowOfEnv[i]);
+    const y2 = rowY(rowOfEnv[i + 1]);
+    const clipPts = blobPoints(ENV_X, y1, 43, 86, i + 3, 0.6);
+    // clipFunc is a Container feature in Konva — wrap the mask path in a
+    // group clipped to the previous blob's outline. (Konva calls beginPath
+    // itself before clipFunc, so only trace the path here.)
+    const mask = new Konva.Group({
+      listening: false,
+      clipFunc: (ctx: Konva.Context) => {
+        ctx.moveTo(clipPts[0][0], clipPts[0][1]);
+        for (let k = 1; k < clipPts.length; k++) ctx.lineTo(clipPts[k][0], clipPts[k][1]);
+        ctx.closePath();
+      },
+    });
+    mask.add(
+      new Konva.Path({
+        data: blob(ENV_X, y2, 43, 86, i + 4, 0.6),
+        fill: colors.envOverlap,
+        opacity: 0.5,
+        listening: false,
       })
     );
+    groups.a.add(mask);
   }
 
   // -------------------------------------------------------------------------
@@ -73,7 +88,7 @@ export function renderChannelLayer(
   groups.b.add(
     new Konva.Line({
       points: [S3STAR.cx, S3STAR.botY - 2, S3STAR.cx, lastMappedY],
-      stroke: COLORS.red,
+      stroke: colors.red,
       strokeWidth: 3.6,
     })
   );
@@ -82,7 +97,7 @@ export function renderChannelLayer(
     groups.b.add(
       new Konva.Line({
         points: [S3STAR.cx, y, 463, y],
-        stroke: COLORS.red,
+        stroke: colors.red,
         strokeWidth: 2.4,
       })
     );
@@ -97,7 +112,7 @@ export function renderChannelLayer(
     groups.c.add(
       new Konva.Path({
         data: wave(CIRCLE_X, rowY(i) + CIRCLE_R, rowY(j) - CIRCLE_R, 4),
-        stroke: COLORS.s2, // amber/yellow squiggle per vsm.html
+        stroke: colors.s2, // amber/yellow squiggle per vsm.html
         strokeWidth: 2.6,
         fill: null as unknown as string,
       })
@@ -110,7 +125,7 @@ export function renderChannelLayer(
   groups.d.add(
     new Konva.Line({
       points: [CMD_R, S3.y + S3.height, CMD_R, lastMgmtY],
-      stroke: COLORS.red,
+      stroke: colors.red,
       strokeWidth: 4.5,
     })
   );
@@ -119,7 +134,7 @@ export function renderChannelLayer(
     groups.d.add(
       new Konva.Line({
         points: [CMD_R, my, CMD_R + 22, my],
-        stroke: COLORS.red,
+        stroke: colors.red,
         strokeWidth: 3.6,
       })
     );
@@ -131,7 +146,7 @@ export function renderChannelLayer(
   groups.e.add(
     new Konva.Line({
       points: [CMD_L, S3.y + S3.height, CMD_L, lastMgmtY],
-      stroke: COLORS.red,
+      stroke: colors.red,
       strokeWidth: 4.5,
     })
   );
@@ -142,7 +157,7 @@ export function renderChannelLayer(
   groups.f.add(
     new Konva.Line({
       points: [S2.cx, S2.botY, S2.cx, lastMgmtY],
-      stroke: COLORS.amber,
+      stroke: colors.amber,
       strokeWidth: 4.5,
     })
   );
@@ -152,7 +167,7 @@ export function renderChannelLayer(
     groups.f.add(
       new Konva.Line({
         points: [621, my, S2.cx, my],
-        stroke: COLORS.amber,
+        stroke: colors.amber,
         strokeWidth: 3.6,
       })
     );
@@ -172,7 +187,7 @@ export function renderChannelLayer(
       x: algDotX,
       y: lastY,
       radius: 4.5,
-      fill: COLORS.algedonic,
+      fill: colors.algedonic,
     })
   );
   groups.g.add(
@@ -187,7 +202,7 @@ export function renderChannelLayer(
         S5.x + 14,
         algEntryY, // enter S5 bar from the left
       ],
-      stroke: COLORS.algedonic,
+      stroke: colors.algedonic,
       strokeWidth: 2.4,
       dash: [7, 4],
     })

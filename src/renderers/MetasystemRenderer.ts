@@ -6,7 +6,7 @@
 
 import Konva from 'konva';
 import type { VsmEvent, VsmSystem } from '../types';
-import { COLORS, lightenHex } from '../utils/palette';
+import { COLORS, lightenHex, type Palette } from '../utils/palette';
 import { S5, S4, S3, S3STAR, S2, CMD_L, CMD_R, ENV_X } from '../layout';
 
 type MetaKey = 's2' | 's3' | 's3star' | 's4' | 's5';
@@ -75,7 +75,8 @@ function bar(
 export function renderMetasystemLayer(
   layer: Konva.Layer,
   system: VsmSystem,
-  emit: (e: VsmEvent) => void
+  emit: (e: VsmEvent) => void,
+  colors: Palette = COLORS
 ): void {
   // ── Spine connectors ─────────────────────────────────────────────────────
 
@@ -83,14 +84,14 @@ export function renderMetasystemLayer(
   layer.add(
     new Konva.Line({
       points: [CMD_L, S5.y + S5.height, CMD_L, S4.y],
-      stroke: COLORS.s5,
+      stroke: colors.s5,
       strokeWidth: 3.4,
     })
   );
   layer.add(
     new Konva.Line({
       points: [CMD_R, S5.y + S5.height, CMD_R, S4.y],
-      stroke: COLORS.s5,
+      stroke: colors.s5,
       strokeWidth: 3.4,
     })
   );
@@ -99,14 +100,14 @@ export function renderMetasystemLayer(
   layer.add(
     new Konva.Line({
       points: [CMD_L, S4.y + S4.height, CMD_L, S3.y],
-      stroke: COLORS.s4,
+      stroke: colors.s4,
       strokeWidth: 4.5,
     })
   );
   layer.add(
     new Konva.Line({
       points: [CMD_R, S4.y + S4.height, CMD_R, S3.y],
-      stroke: COLORS.s4,
+      stroke: colors.s4,
       strokeWidth: 4.5,
     })
   );
@@ -116,7 +117,7 @@ export function renderMetasystemLayer(
     new Konva.Path({
       data: `M 520 216 L ${S3STAR.cx} 216 L ${S3STAR.cx} ${S3STAR.topY}`,
       fill: null as unknown as string,
-      stroke: COLORS.s3,
+      stroke: colors.s3,
       strokeWidth: 5,
       lineJoin: 'round',
       lineCap: 'round',
@@ -128,7 +129,7 @@ export function renderMetasystemLayer(
     new Konva.Path({
       data: `M 616 216 L ${S2.cx} 216 L ${S2.cx} ${S2.topY}`,
       fill: null as unknown as string,
-      stroke: COLORS.s2,
+      stroke: colors.s2,
       strokeWidth: 5,
       lineJoin: 'round',
       lineCap: 'round',
@@ -137,9 +138,9 @@ export function renderMetasystemLayer(
 
   // ── Metasystem bars ──────────────────────────────────────────────────────
 
-  layer.add(bar('5', COLORS.s5, S5, emit, 's5', system.metasystem.s5.id, layer));
-  layer.add(bar('4', COLORS.s4, S4, emit, 's4', system.metasystem.s4.id, layer));
-  layer.add(bar('3', COLORS.s3, S3, emit, 's3', system.metasystem.s3.id, layer));
+  layer.add(bar('5', colors.s5, S5, emit, 's5', system.metasystem.s5.id, layer));
+  layer.add(bar('4', colors.s4, S4, emit, 's4', system.metasystem.s4.id, layer));
+  layer.add(bar('3', colors.s3, S3, emit, 's3', system.metasystem.s3.id, layer));
 
   // ── S3* inverted triangle ▽ (LEFT) ──────────────────────────────────────
 
@@ -147,7 +148,7 @@ export function renderMetasystemLayer(
   const s3starPoly = new Konva.Line({
     points: [S3STAR.cx - 30, S3STAR.topY, S3STAR.cx + 30, S3STAR.topY, S3STAR.cx, S3STAR.botY],
     closed: true,
-    fill: COLORS.s3,
+    fill: colors.s3,
     stroke: '#c23a22',
     strokeWidth: 1,
   });
@@ -162,7 +163,7 @@ export function renderMetasystemLayer(
       fontSize: 14,
       fontFamily: '-apple-system, system-ui, sans-serif',
       fontStyle: 'bold',
-      fill: COLORS.white,
+      fill: colors.white,
       align: 'center',
       verticalAlign: 'middle',
       listening: false,
@@ -170,13 +171,13 @@ export function renderMetasystemLayer(
   );
 
   s3starG.on('mouseenter', () => {
-    s3starPoly.fill(lightenHex(COLORS.s3, 40));
+    s3starPoly.fill(lightenHex(colors.s3, 40));
     layer.batchDraw();
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'pointer';
   });
   s3starG.on('mouseleave', () => {
-    s3starPoly.fill(COLORS.s3);
+    s3starPoly.fill(colors.s3);
     layer.batchDraw();
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
@@ -194,7 +195,7 @@ export function renderMetasystemLayer(
   const s2Poly = new Konva.Line({
     points: [S2.cx - 30, S2.botY, S2.cx + 30, S2.botY, S2.cx, S2.topY],
     closed: true,
-    fill: COLORS.s2,
+    fill: colors.s2,
     stroke: '#d9a52f',
     strokeWidth: 1,
   });
@@ -209,7 +210,7 @@ export function renderMetasystemLayer(
       fontSize: 14,
       fontFamily: '-apple-system, system-ui, sans-serif',
       fontStyle: 'bold',
-      fill: COLORS.white,
+      fill: colors.white,
       align: 'center',
       verticalAlign: 'middle',
       listening: false,
@@ -217,13 +218,13 @@ export function renderMetasystemLayer(
   );
 
   s2G.on('mouseenter', () => {
-    s2Poly.fill(lightenHex(COLORS.s2, 40));
+    s2Poly.fill(lightenHex(colors.s2, 40));
     layer.batchDraw();
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'pointer';
   });
   s2G.on('mouseleave', () => {
-    s2Poly.fill(COLORS.s2);
+    s2Poly.fill(colors.s2);
     layer.batchDraw();
     const stage = layer.getStage();
     if (stage?.container()?.style) stage.container()!.style.cursor = 'grab';
@@ -241,7 +242,7 @@ export function renderMetasystemLayer(
     new Konva.Path({
       data: `M 499 126 C 451 107 ${ENV_X + 96} 107 ${ENV_X + 48} 126`,
       fill: null as unknown as string,
-      stroke: COLORS.s4,
+      stroke: colors.s4,
       strokeWidth: 2.3,
     })
   );
@@ -249,7 +250,7 @@ export function renderMetasystemLayer(
     new Konva.Path({
       data: `M ${ENV_X + 48} 136 C ${ENV_X + 96} 155 451 155 499 136`,
       fill: null as unknown as string,
-      stroke: COLORS.s4,
+      stroke: colors.s4,
       strokeWidth: 2.3,
     })
   );

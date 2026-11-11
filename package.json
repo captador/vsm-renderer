@@ -4,13 +4,13 @@
   "description": "Viable System Model rendering library - Konva-based visualization for VSM diagrams",
   "author": "Arseny Krasikov",
   "license": "EUPL-1.2",
-  "homepage": "https://github.com/arsenykrasikov/vsm-renderer#readme",
+  "homepage": "https://github.com/captador/vsm-renderer#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arsenykrasikov/vsm-renderer.git"
+    "url": "git+https://github.com/captador/vsm-renderer.git"
   },
   "bugs": {
-    "url": "https://github.com/arsenykrasikov/vsm-renderer/issues"
+    "url": "https://github.com/captador/vsm-renderer/issues"
   },
   "keywords": [
     "vsm",

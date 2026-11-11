@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { COLORS } from '../src/utils/palette';
+import { COLORS, getColors } from '../src/utils/palette';
 
 describe('Color Palette', () => {
   describe('System Colors', () => {
@@ -41,6 +41,10 @@ describe('Color Palette', () => {
 
     it('should have correct S1 environment blob color', () => {
       expect(COLORS.envBlob).toBe('#8F8F8F');
+    });
+
+    it('should have correct env overlap mask color (darker grey)', () => {
+      expect(COLORS.envOverlap).toBe('#6B6B6B');
     });
   });
 
@@ -101,6 +105,30 @@ describe('Color Palette', () => {
 
     it('should have S3 and S3* with same color', () => {
       expect(COLORS.s3).toBe(COLORS.s3star);
+    });
+  });
+
+  describe('Themes', () => {
+    it('light theme resolves to the base palette', () => {
+      expect(getColors('light')).toEqual(COLORS);
+      expect(getColors()).toEqual(COLORS);
+    });
+
+    it('dark theme lightens colors that are unreadable on dark', () => {
+      const dark = getColors('dark');
+      expect(dark.navy).not.toBe(COLORS.navy);
+      expect(dark.amplifier).not.toBe(COLORS.amplifier);
+    });
+
+    it('dark theme keeps mid greys, saturated fills, and labels shared', () => {
+      const dark = getColors('dark');
+      expect(dark.stroke).toBe(COLORS.stroke);
+      expect(dark.envBlob).toBe(COLORS.envBlob);
+      expect(dark.s3).toBe(COLORS.s3);
+      expect(dark.white).toBe(COLORS.white);
+      // labels sit on white-filled shapes, which stay white in dark theme
+      expect(dark.label).toBe(COLORS.label);
+      expect(dark.labelMuted).toBe(COLORS.labelMuted);
     });
   });
 });
