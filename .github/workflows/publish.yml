@@ -24,6 +24,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: main
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v7
@@ -54,11 +55,28 @@ jobs:
             exit 1
           fi
 
+      # Skip the npm publish when this release tag introduces no changes to
+      # the published-package code paths relative to the previous tag, so
+      # docs/demo/CI-only releases do not publish an identical package.
+      - name: Check for code changes since previous tag
+        id: code-changes
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          PATHS="src package.json tsconfig.json vite.config.ts pnpm-lock.yaml pnpm-workspace.yaml"
+          if [ -n "$PREV_TAG" ] &&
+             [ -z "$(git diff --name-only "$PREV_TAG" "${GITHUB_REF_NAME}" -- $PATHS)" ]; then
+            echo "No code changes between $PREV_TAG and $GITHUB_REF_NAME — skipping npm publish."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
       # The version comes from the release tag and is written into package.json
       # in the working tree only — pnpm publish packs it into the npm tarball
       # as-is. Nothing is committed or pushed to main, so the branch ruleset
       # (require PR) stays fully enforced.
       - name: Set version from release tag
+        if: steps.code-changes.outputs.changed == 'true'
         run: |
           node -e "
             const fs = require('fs');
@@ -68,10 +86,13 @@ jobs:
           "
 
       - run: pnpm install --frozen-lockfile
+        if: steps.code-changes.outputs.changed == 'true'
 
       - run: pnpm run build
+        if: steps.code-changes.outputs.changed == 'true'
 
       - run: pnpm publish --no-git-checks
+        if: steps.code-changes.outputs.changed == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
