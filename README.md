@@ -62,6 +62,7 @@ const renderer = new VsmRenderer({
 - Click and double-click events on every diagram element (metasystem bars, triangles, S1 units, env blobs, background)
 - Level label overlay: shows the current system name and, when drilled in, the parent unit name
 - Zoom / pan / fullscreen controls (DOM overlay, unaffected by canvas transforms)
+- Responsive sizing: `renderer.resize(width?, height?)` re-sizes the stage and re-centers the diagram (defaults to the container's `clientWidth`/`clientHeight`); pass `autoResize: true` to have the renderer observe the container with its own `ResizeObserver`, and the built-in fullscreen toggle re-fits automatically
 - Click selection: dashed-border highlight on the active element
 - Hover tooltips on S1 units showing full name
 

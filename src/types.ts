@@ -257,4 +257,13 @@ export interface VsmRendererOptions {
    * {@link VsmRenderer.setTheme}.
    */
   theme?: RendererTheme;
+  /**
+   * When `true`, the renderer observes its container with a `ResizeObserver`
+   * and calls {@link VsmRenderer.resize} automatically whenever the container
+   * changes size (window resize, fullscreen, sidebar collapse). Default
+   * `false` — call {@link VsmRenderer.resize} yourself from your own
+   * observer if you need custom behavior. The observer is disconnected by
+   * {@link VsmRenderer.destroy}.
+   */
+  autoResize?: boolean;
 }
