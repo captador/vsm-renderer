@@ -9,8 +9,6 @@ on:
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   # Unit tests — runs on every PR and every push to main.
-  # Skipped on the version-bump commit that publish.yml pushes after a release,
-  # to avoid redundant runs in the auto-release loop.
   # ─────────────────────────────────────────────────────────────────────────────
   test:
     name: Unit Tests
@@ -77,14 +75,16 @@ jobs:
       - name: Determine next version
         id: version
         run: |
-          # Current version from package.json
-          CURRENT=$(node -p "require('./package.json').version")
-
-          # Commits since the last tag (or all commits if no tags yet)
+          # Commits since the last tag (or all commits if no tags yet).
+          # The latest release tag is the source of truth for the current
+          # version — package.json on main is not auto-bumped anymore.
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
           if [ -n "$LAST_TAG" ]; then
+            CURRENT=${LAST_TAG#v}
+            CURRENT=${CURRENT%%-*}
             COMMITS=$(git log "$LAST_TAG..HEAD" --pretty=format:"%s%n%b")
           else
+            CURRENT=$(node -p "require('./package.json').version")
             COMMITS=$(git log --pretty=format:"%s%n%b")
           fi
 
