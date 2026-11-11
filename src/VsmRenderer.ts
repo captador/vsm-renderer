@@ -669,11 +669,15 @@ export class VsmRenderer {
 
   private toggleFullscreen(): void {
     const container = this.stage.container();
-    if (!document.fullscreenElement) {
-      void container.requestFullscreen();
-    } else {
-      void document.exitFullscreen();
-    }
+    const request = document.fullscreenElement
+      ? document.exitFullscreen()
+      : container.requestFullscreen();
+    // requestFullscreen/exitFullscreen reject with a TypeError when the
+    // request is not granted (fullscreen blocked for the site, iframe without
+    // allow="fullscreen", platform restriction). Swallow the rejection so the
+    // toggle never surfaces as an unhandledrejection in the host app
+    // (Sentry issue 160357546 in vsm7-react).
+    request.catch(() => {});
   }
 
   // ==========================================================================
