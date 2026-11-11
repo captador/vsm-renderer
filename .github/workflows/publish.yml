@@ -3,7 +3,9 @@ name: Publish
 # Publishes the npm package on every GitHub Release, with each registry in its
 # own job so one registry failing does not block the other:
 #   1. publish-github — GitHub Packages (uses package.json publishConfig.registry)
-#   2. publish-npmjs  — npmjs public registry (requires the NPM_TOKEN repo secret)
+#   2. publish-npmjs  — stages the package on npmjs: the NPM_TOKEN secret is a
+#      stage-only token, so a maintainer with 2FA must approve the staged
+#      version (`npm stage approve <stage-id>`) to make it live
 #
 # The GitHub Pages demo is deployed separately on every merge to main
 # (deploy-pages job in ci-release.yml), which runs before any release.
@@ -127,7 +129,7 @@ jobs:
   # only the registry auth and the publishConfig switch differ.
   # ─────────────────────────────────────────────────────────────────────────────
   publish-npmjs:
-    name: Publish to npmjs
+    name: Stage publish to npmjs
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -170,6 +172,12 @@ jobs:
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
 
-      - name: Publish to npmjs
-        run: pnpm publish --no-git-checks
+      # The NPM_TOKEN secret is a stage-only token: it cannot publish new
+      # package versions directly (no proof-of-presence / 2FA). Stage the
+      # version here — a maintainer with 2FA then approves it
+      # (`npm stage approve <stage-id>` or on npmjs.com) to make it live.
+      # The token can still deprecate versions and move dist-tags, which this
+      # job does not do. pnpm 12 supports `stage publish` natively.
+      - name: Stage publish to npmjs
+        run: pnpm stage publish --no-git-checks --access public
         if: steps.code-changes.outputs.changed == 'true'
