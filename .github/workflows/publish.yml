@@ -1,4 +1,8 @@
-name: Publish to GitHub Packages
+name: Publish
+
+# Publishes the npm package to two registries on every GitHub Release:
+#   1. GitHub Packages (primary, uses package.json publishConfig.registry)
+#   2. npmjs public registry (requires the NPM_TOKEN repo secret)
 
 on:
   release:
@@ -32,6 +36,11 @@ jobs:
           node-version: '24'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@captador'
+
+      # setup-node only writes auth for its own registry-url, so add the
+      # npmjs token line to the same project .npmrc (expanded at publish time).
+      - name: Add npmjs auth to .npmrc
+        run: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' >> .npmrc
 
       - uses: pnpm/action-setup@v6
         with:
@@ -91,10 +100,28 @@ jobs:
       - run: pnpm run build
         if: steps.code-changes.outputs.changed == 'true'
 
-      - run: pnpm publish --no-git-checks
+      - name: Publish to GitHub Packages
+        run: pnpm publish --no-git-checks
         if: steps.code-changes.outputs.changed == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # package.json publishConfig points at GitHub Packages and cannot be
+      # overridden by --registry, so point it at npmjs for this publish only
+      # (the change is never committed — the version-bump push already happened).
+      # Scoped packages need access: public on npmjs.
+      - name: Publish to npmjs
+        if: steps.code-changes.outputs.changed == 'true'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.publishConfig = { registry: 'https://registry.npmjs.org', access: 'public' };
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          pnpm publish --no-git-checks
 
   deploy-pages:
     name: Deploy Demo to GitHub Pages
