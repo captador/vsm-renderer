@@ -204,6 +204,34 @@ export function wave(x: number, y1: number, y2: number, amp: number): string {
 }
 
 // ============================================================================
+// Arrowhead — filled triangle for a closed Konva.Line
+// ============================================================================
+
+/**
+ * Point array for a filled triangular arrowhead pointing along `angle`
+ * (radians; 0 = +x axis). The tip sits at (x, y) pushed forward by `extend`
+ * along the direction, so the tip is the foremost point of the line it caps.
+ * Pass to a closed Konva.Line.
+ */
+export function arrowHeadPoints(
+  x: number,
+  y: number,
+  angle: number,
+  size: number,
+  extend: number = 0
+): number[] {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  const tipX = x + dx * extend;
+  const tipY = y + dy * extend;
+  const len = size * 1.5;
+  const half = size * 0.8;
+  const bx = tipX - dx * len;
+  const by = tipY - dy * len;
+  return [tipX, tipY, bx - dy * half, by + dx * half, bx + dy * half, by - dx * half];
+}
+
+// ============================================================================
 // Homeostat / S5 arm shape definitions (from vsm.html SHAPE_DEF)
 // ============================================================================
 

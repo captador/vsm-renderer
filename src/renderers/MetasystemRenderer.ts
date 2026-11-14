@@ -7,6 +7,7 @@
 import Konva from 'konva';
 import type { VsmEvent, VsmSystem } from '../types';
 import { COLORS, lightenHex, type Palette } from '../utils/palette';
+import { arrowHeadPoints } from '../utils/geometry';
 import { S5, S4, S3, S3STAR, S2, CMD_L, CMD_R, ENV_X } from '../layout';
 
 type MetaKey = 's2' | 's3' | 's3star' | 's4' | 's5';
@@ -236,7 +237,7 @@ export function renderMetasystemLayer(
   });
   layer.add(s2G);
 
-  // ── S4 ↔ future env arcs (thin green, two-way) ───────────────────────────
+  // ── S4 ↔ future env arcs (thin green, two-way, arrowhead per arc) ────────
 
   layer.add(
     new Konva.Path({
@@ -246,12 +247,28 @@ export function renderMetasystemLayer(
       strokeWidth: 2.3,
     })
   );
+  // Upper arc: S4 → future env; head at the env end, along the end tangent
+  layer.add(
+    new Konva.Line({
+      points: arrowHeadPoints(ENV_X + 48, 126, Math.atan2(126 - 107, -48), 6.5, 1.5),
+      closed: true,
+      fill: colors.s4,
+    })
+  );
   layer.add(
     new Konva.Path({
       data: `M ${ENV_X + 48} 136 C ${ENV_X + 96} 155 451 155 499 136`,
       fill: null as unknown as string,
       stroke: colors.s4,
       strokeWidth: 2.3,
+    })
+  );
+  // Lower arc: future env → S4; head at the S4 end, along the end tangent
+  layer.add(
+    new Konva.Line({
+      points: arrowHeadPoints(499, 136, Math.atan2(136 - 155, 499 - 451), 6.5, 1.5),
+      closed: true,
+      fill: colors.s4,
     })
   );
 }

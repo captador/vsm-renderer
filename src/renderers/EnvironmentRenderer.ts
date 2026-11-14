@@ -6,7 +6,7 @@
 import Konva from 'konva';
 import type { VsmSystem, VsmEvent, EnvBlob } from '../types';
 import { COLORS, lightenHex, type Palette } from '../utils/palette';
-import { blob, envSilhouette } from '../utils/geometry';
+import { blob, envSilhouette, arrowHeadPoints } from '../utils/geometry';
 import { ENV_X, rowY, envRows, totalRows } from '../layout';
 
 const ENV_BLOB_EX = ENV_X + 40; // right edge of env blob (used for eye-loops)
@@ -201,18 +201,35 @@ export function renderEnvironmentLayer(
       })
     );
 
-    // Simple arrowhead at end of lower arc (pointing toward circle)
+    // Arrowheads make the loop double-headed (NOTATION §5: amplifier /
+    // attenuator arrows are double-headed). Upper arc ends at the env blob,
+    // lower arc at the ops circle; each head points along the arc's end
+    // tangent (derived from the last Bézier control point to the endpoint).
     const arrowSize = 5;
+    const arrowExtend = 1; // tip sits just past the arc's butt-capped end
     eyeGroup.add(
       new Konva.Line({
-        points: [
+        points: arrowHeadPoints(
+          ENV_BLOB_EX,
+          y - EYE_GAP,
+          Math.atan2(41 - EYE_GAP, -36),
+          arrowSize,
+          arrowExtend
+        ),
+        closed: true,
+        fill: colors.navy,
+        listening: false,
+      })
+    );
+    eyeGroup.add(
+      new Konva.Line({
+        points: arrowHeadPoints(
           EYE_CX,
-          y + EYE_GAP - arrowSize,
-          EYE_CX + arrowSize * 1.2,
           y + EYE_GAP,
-          EYE_CX,
-          y + EYE_GAP + arrowSize,
-        ],
+          Math.atan2(EYE_GAP - 41, 36),
+          arrowSize,
+          arrowExtend
+        ),
         closed: true,
         fill: colors.navy,
         listening: false,
